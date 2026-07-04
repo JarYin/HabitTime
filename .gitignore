@@ -45,3 +45,5 @@ example
 
 # IDE
 .idea/
+
+.vscode

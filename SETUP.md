@@ -180,6 +180,7 @@ Your development machine needs a **JDK and the Android SDK** first:
    since the Android Gradle Plugin's native build (CMake) doesn't support them yet
 3. Set the env var `ANDROID_HOME = %LOCALAPPDATA%\Android\Sdk`
 
+<<<<<<< HEAD
 > ### ⚠️ Build from a path with no spaces or non-ASCII characters
 > Example of a **problematic** path: `C:\Users\me\My Projects\final-project\HabitTime`
 > Example of a **working** path: `C:\projects\HabitTime`
@@ -187,6 +188,16 @@ Your development machine needs a **JDK and the Android SDK** first:
 > A path containing non-ASCII characters or spaces causes the Android native build's CMake/Ninja step
 > to fail on Windows (a well-known RN/Expo issue). Writing code / running `tsc` / `prebuild` works fine
 > from any path, but `run:android` should only be run after moving to a safe path.
+=======
+> ### ⚠️ ต้องย้ายโปรเจกต์ก่อน build
+> path ปัจจุบัน `D:\code\HabitTime` มี**ภาษาไทย + ช่องว่าง**
+> ซึ่งทำให้ CMake/Ninja ของ Android build ล้มเหลวบน Windows (ปัญหาที่รู้จักกันดีของ RN/Expo)
+> ให้ย้ายทั้งโฟลเดอร์ไป path อังกฤษล้วน เช่น:
+> ```powershell
+> Move-Item "D:\code\HabitTime" "D:\code\HabitTime"
+> ```
+> การเขียนโค้ด/`tsc`/`prebuild` ทำที่ path เดิมได้ แต่ `run:android` ควรทำหลังย้ายแล้วเท่านั้น
+>>>>>>> 91ca301ba28e29ec547b85215aa2532cbefb12ac
 
 ```bash
 cd C:\projects\HabitTime

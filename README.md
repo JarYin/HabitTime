@@ -1,56 +1,48 @@
-# Welcome to your Expo app 👋
+# HabitTime ⏱️
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+แอปสร้างวินัยและติดตามเวลากิจกรรม (Habit / Activity Time Tracker) สำหรับ Android
 
-## Get started
+**Local-Database 100% · Offline-First · Privacy-Focused** — ข้อมูลทั้งหมดอยู่บนเครื่องผู้ใช้เท่านั้น
+ไม่มีบัญชีผู้ใช้ ไม่มีเซิร์ฟเวอร์ ไม่มีการส่งข้อมูลออกนอกเครื่อง
 
-1. Install dependencies
+> 📖 เอกสารฉบับเต็ม (โครงสร้างโปรเจกต์, Database Schema, การเข้ารหัส, วิธี build):
+> ดู **[SETUP.md](./SETUP.md)**
 
-   ```bash
-   npm install
-   ```
+## 📲 ติดตั้งแอป (สำหรับผู้ใช้ทั่วไป — ไม่ต้องเขียนโค้ด)
 
-2. Start the app
+ไม่ต้องคลอนโปรเจกต์หรือ build เอง แค่ดาวน์โหลด `.apk` แล้วติดตั้งตรงบนมือถือ Android:
 
-   ```bash
-   npx expo start
-   ```
+1. เปิดลิงก์นี้บนมือถือ Android (หรือสแกน QR code ในหน้านั้น):
+   👉 **https://expo.dev/accounts/devaflow/projects/myapp/builds/bd31fa41-c4c5-4763-ad02-756435899b19**
+2. กด **Install** เพื่อดาวน์โหลดไฟล์ `.apk`
+3. ถ้าเป็นการติดตั้งแอปนอก Play Store ครั้งแรก Android จะขออนุญาต **"ติดตั้งแอปที่ไม่รู้จัก" (Install unknown apps)**
+   → กด **อนุญาต/Allow** สำหรับเบราว์เซอร์หรือแอปที่ใช้เปิดลิงก์ แล้วกดติดตั้งอีกครั้ง
+4. เปิดแอป **HabitTime** ได้เลย ไม่ต้องล็อกอิน ไม่ต้องต่อเน็ต — ข้อมูลทั้งหมดอยู่ในเครื่องเท่านั้น
 
-In the output, you'll find options to open the app in a
+> ⚠️ ไฟล์นี้ไม่ได้เซ็นชื่อผ่าน Play Store (เป็น internal build ของ Expo) — Android/Play Protect
+> อาจเตือนว่า "ไม่รู้จักผู้พัฒนา" ซึ่งเป็นเรื่องปกติสำหรับแอปที่แจกนอก Store ไม่ใช่ไวรัส
+> สามารถกด "ติดตั้งต่อ" ได้ตามปกติ
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Tech Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| ส่วน | เทคโนโลยี |
+| --- | --- |
+| Framework | Expo SDK 57 (React Native 0.86) + Expo Prebuild (dev client) |
+| ภาษา | TypeScript (strict) |
+| ฐานข้อมูล | WatermelonDB 0.28 (SQLite + JSI) — บนเครื่องเท่านั้น |
+| การเข้ารหัส | AES-256-GCM ระดับฟิลด์ (@noble/ciphers) + กุญแจใน Android Keystore (expo-secure-store) |
+| State | Zustand 5 |
+| UI | NativeWind 4 (Tailwind CSS 3.4) ธีมมืด |
+| แจ้งเตือน | expo-notifications (local ล้วน ไม่มี push server) |
 
-## Get a fresh project
-
-When you're ready, run:
+## เริ่มต้นแบบเร็ว
 
 ```bash
-npm run reset-project
+npm install
+npx expo prebuild --platform android   # สร้างโฟลเดอร์ android/ (ทำไว้ให้แล้ว)
+npx expo run:android                   # ต้องมี JDK 17 + Android Studio/SDK
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+⚠️ **สำคัญ:** WatermelonDB เป็น native module — รันใน **Expo Go ไม่ได้** ต้อง build dev client
+และก่อน build จริง **ย้ายโปรเจกต์ไป path ภาษาอังกฤษล้วนไม่มีช่องว่าง** เช่น `D:\code\HabitTime`
+(path ที่มีภาษาไทย/ช่องว่างทำให้ CMake/Ninja ของ Android build พังบน Windows — ดูรายละเอียดใน SETUP.md)

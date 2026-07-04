@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // ปิดเฉพาะ property initializer check: WatermelonDB decorators (@text, @field, ...)
+    // เซ็ตค่า field ตอน runtime เอง ซึ่ง tsc มองไม่เห็น
+    "strictPropertyInitialization": false,
+    "experimentalDecorators": true,
     "paths": {
       "@/*": [
         "./src/*"
@@ -15,6 +19,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ]
 }

@@ -1,203 +1,230 @@
-# HabitTime — เอกสารโครงสร้างโปรเจกต์และการเซ็ตอัพ
+# HabitTime — Project Structure & Setup
 
-แอปสร้างวินัยและติดตามเวลากิจกรรม (Activity Time Tracker) — โปรเจกต์จบ
-ออกแบบตามเอกสาร SRS `App HabitTime 1.0.pdf` และ `App HabitTime 2.0.pdf` (โฟลเดอร์ `uploads/`)
+> 🇹🇭 ภาษาไทย: **[SETUP.th.md](./SETUP.th.md)**
+
+An activity time tracker app — final school project, designed from the SRS documents
+`App HabitTime 1.0.pdf` and `App HabitTime 2.0.pdf` (`uploads/` folder).
 
 ---
 
-## 1. การตีความเอกสาร SRS → สถาปัตยกรรมแอป
+## 1. Interpreting the SRS documents → app architecture
 
-จากการวิเคราะห์ PDF ทั้งสองไฟล์:
+Based on analysis of both PDFs:
 
-- **HabitTime ไม่ใช่ habit tracker แบบติ๊กเช็คอิน** แต่เป็นแอป **จับเวลากิจกรรม**:
-  สร้างกิจกรรม (ชื่อ + หมวดหมู่ + อิโมจิ + สี) → จับเวลาแบบ stopwatch (เริ่ม/พัก/สิ้นสุดและบันทึก)
-  → ดูประวัติ (ค้นหา, กรองหมวดหมู่, กรองช่วงวันที่) → สถิติ (รายวัน/สัปดาห์/เดือน + กิจกรรมที่ใช้เวลามากที่สุด)
-- เอกสารระบุ **Cloud database + ระบบสมาชิก (Guest/User/Admin)** แต่ข้อกำหนดของโปรเจกต์นี้คือ
-  **Local 100% เพื่อความเป็นส่วนตัวสูงสุด** จึงตัดสินใจ:
-  - ❌ ตัด: สมัครสมาชิก / ล็อกอิน / Admin / Cloud sync
-  - ✅ แทนที่ด้วย: หน้า Onboarding (ตาม "Welcome Page" ในเอกสาร) + ข้อมูลทุกอย่างอยู่ใน SQLite บนเครื่อง + เข้ารหัสฟิลด์ที่เป็นข้อมูลส่วนตัว
-- เอกสารไม่มี mockup หน้าจอ/สี — โทน **ธีมมืด + ชมพู** ตีความจากสีในไดอะแกรม UML ของเอกสาร 2.0
-- ส่วนขยายที่เพิ่มนอกเหนือเอกสาร (ระบุชัดใน comment): **แจ้งเตือนรายวันแบบ local** (ช่วยเรื่อง "สร้างวินัย")
+- **HabitTime is not a checkbox-style habit tracker** — it's an **activity time-tracking** app:
+  create an activity (name + category + emoji + color) → track it with a stopwatch (start/pause/finish & save)
+  → view history (search, filter by category, filter by date range) → view stats (daily/weekly/monthly + top activity by time spent)
+- The SRS calls for a **cloud database + membership system (Guest/User/Admin)**, but this project's
+  requirement is **100% local for maximum privacy**, so:
+  - ❌ Removed: sign-up / login / Admin / cloud sync
+  - ✅ Replaced with: an onboarding screen (matching the SRS's "Welcome Page") + all data in on-device SQLite
+    + encryption of personally-identifying fields
+- The SRS has no screen mockups/color spec — the **dark + pink theme** was interpreted from the UML diagram
+  colors in document 2.0
+- One addition beyond the SRS (clearly marked in comments): **local daily reminders** (supports the "build discipline" goal)
 
 ## 2. Tech Stack
 
-| ส่วน | เทคโนโลยี | เหตุผล |
+| Part | Technology | Why |
 | --- | --- | --- |
-| Core | **Expo SDK 57** (React Native 0.86, React 19.2) + **Expo Prebuild** | ได้ native project (`android/`) เต็มรูปแบบ รองรับ native module ของ WatermelonDB |
-| ภาษา | **TypeScript** (strict + experimentalDecorators) | type-safe schema/model |
-| ฐานข้อมูล | **WatermelonDB 0.28** (SQLite, JSI adapter) | local-first, reactive query, เร็ว |
-| Config plugin | `@morrowdigital/watermelondb-expo-plugin` + `expo-build-properties` | ผูก native code ให้อัตโนมัติตอน prebuild |
-| เข้ารหัส | **AES-256-GCM ระดับฟิลด์** (`@noble/ciphers`) + กุญแจใน **Android Keystore** (`expo-secure-store`) + `expo-crypto` (CSPRNG) | ดูเหตุผลข้อ 5 |
-| State | **Zustand 5** | เบา ไม่มี boilerplate ใช้กับสถานะ stopwatch |
-| UI | **NativeWind 4.2** + **tailwindcss 3.4** (ห้ามอัป v4!) | เขียน UI เร็วด้วย className |
-| แจ้งเตือน | **expo-notifications** | ตั้งเวลาบนเครื่องผ่าน AlarmManager — ไม่มี push server |
+| Core | **Expo SDK 57** (React Native 0.86, React 19.2) + **Expo Prebuild** | Full native project (`android/`), needed for WatermelonDB's native module |
+| Language | **TypeScript** (strict + experimentalDecorators) | Type-safe schema/models |
+| Database | **WatermelonDB 0.28** (SQLite, JSI adapter) | Local-first, reactive queries, fast |
+| Config plugin | `@morrowdigital/watermelondb-expo-plugin` + `expo-build-properties` | Wires up native code automatically during prebuild |
+| Encryption | **Field-level AES-256-GCM** (`@noble/ciphers`) + key in the **Android Keystore** (`expo-secure-store`) + `expo-crypto` (CSPRNG) | See section 5 |
+| State | **Zustand 5** | Lightweight, no boilerplate, used for stopwatch state |
+| UI | **NativeWind 4.2** + **tailwindcss 3.4** (do not upgrade to v4!) | Fast UI authoring with className |
+| Notifications | **expo-notifications** | On-device scheduling via AlarmManager — no push server |
 
-## 3. โครงสร้างโปรเจกต์ (Separation of Concerns)
+## 3. Project Structure (Separation of Concerns)
 
 ```
 HabitTime/
 ├── app.json                  # Expo config + plugins (watermelondb, build-properties)
 ├── babel.config.js           # nativewind preset + decorators (WatermelonDB)
 ├── metro.config.js           # withNativeWind (input: src/global.css)
-├── tailwind.config.js        # ธีมสี (พื้นมืด + ชมพู) — ผ่าน dataviz validator
-├── android/                  # native project จาก `expo prebuild` (อย่าแก้มือถ้าไม่จำเป็น)
+├── tailwind.config.js        # color theme (dark + pink) — validated against the dataviz skill
+├── android/                  # native project from `expo prebuild` (avoid editing by hand)
 └── src/
-    ├── app/                  # 🖥️ UI LAYER — หน้าจอ (expo-router, file-based)
-    │   ├── _layout.tsx       #   init: โหลดกุญแจ → seed → notifications + onboarding gate
-    │   ├── onboarding.tsx    #   หน้าต้อนรับ 3 สไลด์ (แทน Welcome Page ของ SRS)
-    │   ├── (tabs)/           #   4 แท็บ: หน้าแรก / กิจกรรม / ประวัติ / สถิติ
-    │   │   ├── index.tsx     #   Dashboard: สรุปวันนี้ + กราฟ 7 วัน + กิจกรรม
-    │   │   ├── activities.tsx#   จัดการกิจกรรม: ค้นหา + กรองหมวดหมู่ + เวลาสะสม
-    │   │   ├── history.tsx   #   ประวัติ: กรองช่วงวัน/หมวดหมู่/ค้นหา จัดกลุ่มรายวัน
-    │   │   └── stats.tsx     #   สถิติ: วัน/สัปดาห์/เดือน + top activity + bar list
+    ├── app/                  # 🖥️ UI LAYER — screens (expo-router, file-based)
+    │   ├── _layout.tsx       #   init: load encryption key → seed → notifications + onboarding gate
+    │   ├── onboarding.tsx    #   3-slide welcome screen (replaces the SRS's Welcome Page)
+    │   ├── (tabs)/           #   4 tabs: home / activities / history / stats
+    │   │   ├── index.tsx     #   Dashboard: today's summary + 7-day chart + activities
+    │   │   ├── activities.tsx#   Manage activities: search + category filter + total time
+    │   │   ├── history.tsx   #   History: filter by date/category/search, grouped by day
+    │   │   └── stats.tsx     #   Stats: day/week/month + top activity + bar list
     │   ├── activity/
-    │   │   ├── new.tsx       #   เพิ่มกิจกรรม (ชื่อ→หมวดหมู่→อิโมจิ→สี→บันทึก)
+    │   │   ├── new.tsx       #   Add activity (name → category → emoji → color → save)
     │   │   └── [id]/
-    │   │       ├── index.tsx #   รายละเอียด + เวลาสะสม + ลบ(ยืนยัน)
-    │   │       └── edit.tsx  #   แก้ไขกิจกรรม
-    │   ├── timer/[id].tsx    #   stopwatch: เริ่ม/พัก/จับต่อ/สิ้นสุดและบันทึก
-    │   └── settings.tsx      #   แจ้งเตือนรายวัน + ความเป็นส่วนตัว + ลบข้อมูล
-    ├── components/           # 🧩 UI components ใช้ซ้ำ (ActivityCard, WeekBars, ...)
+    │   │       ├── index.tsx #   Detail view + total time + delete (with confirmation)
+    │   │       └── edit.tsx  #   Edit activity
+    │   ├── timer/[id].tsx    #   Stopwatch: start/pause/resume/finish & save
+    │   └── settings.tsx      #   Daily reminders + privacy + delete data
+    ├── components/           # 🧩 Reusable UI components (ActivityCard, WeekBars, ...)
     ├── database/             # 💾 DATA LAYER — WatermelonDB
-    │   ├── schema.ts         #   ตาราง + คอลัมน์ (version 1)
-    │   ├── migrations.ts     #   schema migrations (เพิ่มเมื่อ schema เปลี่ยน)
+    │   ├── schema.ts         #   Tables + columns (version 1)
+    │   ├── migrations.ts     #   Schema migrations (add one whenever the schema changes)
     │   ├── models/           #   Activity, TimeSession, Category (decorators)
-    │   ├── index.ts          #   SQLiteAdapter (jsi) + Database instance
-    │   └── seed.ts           #   seed หมวดหมู่เริ่มต้น 7 หมวด
-    ├── services/             # ⚙️ LOGIC LAYER — business logic (หน้าจอห้าม query ตรง)
-    │   ├── activityService.ts#   CRUD กิจกรรม + ค้นหาชื่อใน memory
-    │   ├── sessionService.ts #   บันทึกเซสชัน + query ประวัติตามตัวกรอง
-    │   ├── statsService.ts   #   pure functions รวมสถิติ (reactive + ทดสอบง่าย)
-    │   ├── categoryService.ts#   query หมวดหมู่
-    │   ├── notificationService.ts # แจ้งเตือนรายวัน local
-    │   └── settingsService.ts#   key-value settings (database.localStorage)
+    │   ├── index.ts          #   SQLiteAdapter + Database instance
+    │   └── seed.ts           #   Seeds 7 default categories
+    ├── services/             # ⚙️ LOGIC LAYER — business logic (screens must not query the DB directly)
+    │   ├── activityService.ts#   Activity CRUD + in-memory name search
+    │   ├── sessionService.ts #   Save sessions + query history by filter
+    │   ├── statsService.ts   #   Pure functions that aggregate stats (reactive, easy to test)
+    │   ├── categoryService.ts#   Category queries
+    │   ├── notificationService.ts # Local daily reminders
+    │   └── settingsService.ts#   Key-value settings (database.localStorage)
     ├── stores/               # 🔄 STATE — zustand (timerStore, appStore)
-    ├── hooks/                # useQueryList / useQueryCount / useRecord (observe DB)
+    ├── hooks/                # useQueryList / useQueryCount / useRecord (observe the DB)
     ├── lib/
-    │   ├── dates.ts          #   day key, สัปดาห์เริ่มวันจันทร์, format ไทย
+    │   ├── dates.ts          #   Day key, week starting Monday, Thai date formatting
     │   └── crypto/           # 🔐 fieldCipher (AES-GCM) + keyManager (Keystore)
-    └── constants/            # strings.ts (ข้อความไทยรวมศูนย์), palette.ts (สี/อิโมจิ)
+    └── constants/            # strings.ts (centralized Thai copy), palette.ts (colors/emoji)
 ```
 
-กติกาการพึ่งพา (dependency rule): `app → components/hooks/stores → services → database/lib`
-หน้าจอไม่แตะ `database` ตรง ๆ ยกเว้นส่ง query จาก services เข้า hook observe
+Dependency rule: `app → components/hooks/stores → services → database/lib`.
+Screens never touch `database` directly, except by passing a query from a service into an observing hook.
 
-## 4. Database Schema (อ้างอิง use cases จาก @uploads)
+## 4. Database Schema (mapped to use cases from the SRS)
 
 ```
-categories (หมวดหมู่ — seed 7 หมวดตอนเปิดครั้งแรก)
-├── id            string  (PK, สร้างอัตโนมัติ)
-├── name          string      "การเรียน", "ออกกำลังกาย", ...
+categories (seeded with 7 defaults on first launch)
+├── id            string  (PK, auto-generated)
+├── name          string      "Study", "Exercise", ...
 ├── emoji         string      "📚"
 ├── color         string      "#38BDF8"
 ├── is_default    boolean
 ├── sort_order    number
 └── created_at / updated_at   number (epoch ms)
 
-activities (กิจกรรม — use case "เพิ่มกิจกรรม": ชื่อ+หมวดหมู่+อิโมจิ+สี)
+activities (use case "add activity": name + category + emoji + color)
 ├── id            string  (PK)
-├── name_enc      string  🔐 ชื่อกิจกรรม เข้ารหัส AES-256-GCM
+├── name_enc      string  🔐 activity name, AES-256-GCM encrypted
 ├── category_id   string  (FK → categories, indexed)
 ├── emoji         string
 ├── color         string
 ├── is_archived   boolean
 └── created_at / updated_at
 
-time_sessions (บันทึกจับเวลา 1 ครั้ง — "สิ้นสุดและบันทึกเวลา")
+time_sessions (one tracked session — "finish & save")
 ├── id            string  (PK)
 ├── activity_id   string  (FK → activities, indexed)
 ├── started_at    number  (epoch ms)
-├── ended_at      number  (epoch ms) = "วันที่ทำกิจกรรม"
-├── duration_sec  number  (หักช่วงกดพักแล้ว)
-├── day_key       string  "YYYY-MM-DD" (indexed — กรองช่วงวัน/ปฏิทิน/สถิติ)
-├── note_enc      string? 🔐 โน้ต (เข้ารหัส, optional)
+├── ended_at      number  (epoch ms) = "date the activity was done"
+├── duration_sec  number  (with paused time subtracted)
+├── day_key       string  "YYYY-MM-DD" (indexed — used for date-range/calendar/stats filtering)
+├── note_enc      string? 🔐 note (encrypted, optional)
 └── created_at / updated_at
 
-ความสัมพันธ์:  Category 1 ── * Activity 1 ── * TimeSession
+Relationships:  Category 1 ── * Activity 1 ── * TimeSession
 ```
 
-ค่าที่คำนวณ (ไม่เก็บในตาราง — คำนวณจาก sessions เสมอ เพื่อไม่ให้ข้อมูลขัดกัน):
-เวลาสะสมต่อกิจกรรม, สถิติราย วัน/สัปดาห์/เดือน, กิจกรรมที่ใช้เวลามากที่สุด
+Computed values (not stored — always derived from sessions, to avoid data getting out of sync):
+total time per activity, daily/weekly/monthly stats, top activity by time spent.
 
-## 5. การเข้ารหัส (ทำไมเป็น field-level ไม่ใช่ SQLCipher)
+## 5. Encryption (why field-level, not SQLCipher)
 
-**สถานะจริงของ WatermelonDB (ตรวจสอบ มิ.ย. 2026):** ยังไม่รองรับ SQLCipher อย่างเป็นทางการ —
-PR [#907](https://github.com/Nozbe/WatermelonDB/pull/907) และ [#1635](https://github.com/Nozbe/WatermelonDB/pull/1635)
-ค้างหลายปีและผู้เขียนถอนตัวแล้ว ทางเลือกที่ใช้งานได้จริงบน Expo คือ:
+**Actual state of WatermelonDB (checked June 2026):** it does not officially support SQLCipher —
+PRs [#907](https://github.com/Nozbe/WatermelonDB/pull/907) and [#1635](https://github.com/Nozbe/WatermelonDB/pull/1635)
+have been stalled for years and the authors have stepped back from them. The practical approach on Expo is:
 
 ```
-เปิดแอป → keyManager.initEncryption()
-           ├─ มีกุญแจใน SecureStore?  → โหลดเข้า memory
-           └─ ไม่มี (ครั้งแรก)        → สุ่ม 32 ไบต์ (expo-crypto CSPRNG)
-                                        → เก็บใน SecureStore (Android Keystore)
-เขียนข้อมูล → activity.setName("อ่านหนังสือ")
-              → name_enc = "v1:<nonce 12B hex>:<AES-256-GCM ciphertext+tag hex>"
-อ่านข้อมูล  → activity.name (getter) → ถอดรหัสใน memory
+App opens → keyManager.initEncryption()
+             ├─ Key already in SecureStore?  → load it into memory
+             └─ No key yet (first launch)    → generate 32 random bytes (expo-crypto CSPRNG)
+                                              → store in SecureStore (Android Keystore-backed)
+Writing data → activity.setName("Read a book")
+               → name_enc = "v1:<12-byte nonce hex>:<AES-256-GCM ciphertext+tag hex>"
+Reading data → activity.name (getter) → decrypted in memory
 ```
 
-- ฟิลด์ที่เข้ารหัส: `activities.name_enc`, `time_sessions.note_enc` (ข้อมูลที่ผู้ใช้พิมพ์เอง)
-- ฟิลด์ plaintext: id, FK, ตัวเลขเวลา, `day_key` — จำเป็นสำหรับ `WHERE`/index/สถิติ
-- ผลข้างเคียง: **ค้นหาชื่อทำใน memory** (`filterActivitiesByName`) — ไม่มีปัญหาเพราะข้อมูลผู้ใช้เดียว
-- แนวป้องกันเสริมของ Android เอง: File-Based Encryption เข้ารหัส storage ทั้งเครื่องตั้งแต่ Android 10
-- ถ้าอนาคตต้องการเข้ารหัสทั้งไฟล์จริง ๆ: ทางที่ workable คือย้าย storage layer ไป
-  `@op-engineering/op-sqlite` (มี SQLCipher option) — ไม่ใช่ patch WatermelonDB
+- Encrypted fields: `activities.name_enc`, `time_sessions.note_enc` (user-typed personal data)
+- Plaintext fields: id, foreign keys, timestamps, `day_key` — needed for `WHERE`/index/stats
+- Trade-off: **name search happens in memory** (`filterActivitiesByName`) — not an issue since it's single-user data
+- Additional protection from Android itself: File-Based Encryption encrypts all on-device storage since Android 10
+- If true whole-file encryption is needed in the future, the workable path is moving the storage layer to
+  `@op-engineering/op-sqlite` (which has a SQLCipher option) — not patching WatermelonDB itself
 
-## 6. ขั้นตอน Initialize โปรเจกต์ (ที่ทำไปแล้ว — ทำซ้ำได้ตามนี้)
+## 6. Steps to initialize the project (already done — reproducible from here)
 
 ```bash
-# 1) สร้างโปรเจกต์ (Expo SDK 57 + expo-router + TypeScript)
+# 1) Create the project (Expo SDK 57 + expo-router + TypeScript)
 npx create-expo-app@latest HabitTime
 
-# 2) ฐานข้อมูล + state + notifications + crypto
+# 2) Database + state + notifications + crypto
 npx expo install expo-secure-store expo-crypto expo-notifications expo-build-properties expo-dev-client
 npm install @nozbe/watermelondb zustand @noble/ciphers
 npm install @morrowdigital/watermelondb-expo-plugin
-npm install -D @babel/plugin-proposal-decorators@^7.29.7   # ต้อง v7 (Babel 7)
+npm install -D @babel/plugin-proposal-decorators@^7.29.7   # must be v7 (Babel 7)
 
 # 3) UI
 npx expo install nativewind @expo/vector-icons
-npm install -D tailwindcss@^3.4.17    # ⚠️ NativeWind 4 ไม่รองรับ tailwind v4
+npm install -D tailwindcss@^3.4.17    # ⚠️ NativeWind 4 does not support Tailwind v4
 
-# 4) config ที่แก้: app.json (plugins + android.package), babel.config.js,
+# 4) Config files touched: app.json (plugins + android.package), babel.config.js,
 #    metro.config.js, tailwind.config.js, tsconfig.json (experimentalDecorators),
 #    src/global.css (@tailwind directives), nativewind-env.d.ts
 
-# 5) สร้าง native project
+# 5) Generate the native project
 npx expo prebuild --platform android
 ```
 
-## 7. การ build ลงเครื่อง/emulator
+## 7. Building on your machine / emulator
 
-เครื่องที่ใช้พัฒนายัง**ไม่มี JDK และ Android SDK** — ติดตั้งก่อน:
+Your development machine needs a **JDK and the Android SDK** first:
 
-1. ติดตั้ง **Android Studio** (มาพร้อม Android SDK + emulator): <https://developer.android.com/studio>
-2. ติดตั้ง **JDK 17** (Temurin: <https://adoptium.net>) แล้วตั้ง `JAVA_HOME`
-3. ตั้ง env var `ANDROID_HOME = %LOCALAPPDATA%\Android\Sdk`
+1. Install **Android Studio** (bundles the Android SDK + emulator): <https://developer.android.com/studio>
+2. Install **JDK 17 or 21** (Temurin: <https://adoptium.net>, or use the JBR bundled with Android Studio at
+   `<Android Studio install dir>/jbr`) and set `JAVA_HOME` — **do not use a newer JDK** (e.g. JDK 24/25),
+   since the Android Gradle Plugin's native build (CMake) doesn't support them yet
+3. Set the env var `ANDROID_HOME = %LOCALAPPDATA%\Android\Sdk`
 
-> ### ⚠️ ต้องย้ายโปรเจกต์ก่อน build
-> path ปัจจุบัน `D:\code\โปรเจ็คจบ\App onboarding\HabitTime` มี**ภาษาไทย + ช่องว่าง**
-> ซึ่งทำให้ CMake/Ninja ของ Android build ล้มเหลวบน Windows (ปัญหาที่รู้จักกันดีของ RN/Expo)
-> ให้ย้ายทั้งโฟลเดอร์ไป path อังกฤษล้วน เช่น:
-> ```powershell
-> Move-Item "D:\code\โปรเจ็คจบ\App onboarding\HabitTime" "D:\code\HabitTime"
-> ```
-> การเขียนโค้ด/`tsc`/`prebuild` ทำที่ path เดิมได้ แต่ `run:android` ควรทำหลังย้ายแล้วเท่านั้น
+> ### ⚠️ Build from a path with no spaces or non-ASCII characters
+> Example of a **problematic** path: `C:\Users\me\My Projects\final-project\HabitTime`
+> Example of a **working** path: `C:\projects\HabitTime`
+>
+> A path containing non-ASCII characters or spaces causes the Android native build's CMake/Ninja step
+> to fail on Windows (a well-known RN/Expo issue). Writing code / running `tsc` / `prebuild` works fine
+> from any path, but `run:android` should only be run after moving to a safe path.
 
 ```bash
-cd D:\code\HabitTime
-npx expo run:android        # build + ติดตั้ง dev client + เปิดแอป
-# ครั้งถัดไปแก้เฉพาะ JS/TS: npx expo start --dev-client
+cd C:\projects\HabitTime
+npx expo run:android        # builds + installs the dev client + opens the app
+# for JS/TS-only changes afterwards: npx expo start --dev-client
 ```
 
-**Expo Go ใช้ไม่ได้** (WatermelonDB เป็น native module) — ต้องเป็น dev client จาก `run:android`
-หรือ EAS Build (`eas build --profile development --platform android`) ถ้าไม่อยากติดตั้ง Android Studio
+**Expo Go will not work** (WatermelonDB is a native module) — you need a dev client from `run:android`,
+or EAS Build (`eas build --profile development --platform android`) if you'd rather not install Android Studio.
 
-## 8. สิ่งที่ควรระวัง / Next Steps
+## 8. Distributing the app to end users (without the Play Store)
 
-- **อย่าอัป tailwindcss เป็น v4** จนกว่า NativeWind v5 จะ stable
-- แก้ schema → เพิ่ม `version` ใน `schema.ts` + เขียน migration ใน `migrations.ts` เสมอ
-- WatermelonDB 0.28 + SDK 57 เป็นการจับคู่ที่ใหม่กว่าที่ plugin ทดสอบ (SDK 54) —
-  ถ้า JSI adapter มีปัญหาตอนรัน ให้ fallback: `jsi: false` ใน `src/database/index.ts`
-  และ `["@morrowdigital/watermelondb-expo-plugin", { "disableJsi": true }]` ใน app.json
-- ไอเดียต่อยอด: export/backup ข้อมูลเป็นไฟล์ (ยังอยู่บนเครื่อง), streak/เป้าหมายรายวัน,
-  ปฏิทินเต็มหน้า, Home-screen widget, ล็อกแอปด้วย biometric (expo-local-authentication)
+Use **EAS Build** with internal distribution — produces a `.apk` with a shareable link/QR code:
+
+```bash
+npx eas-cli login                                    # log in / sign up for a (free) Expo account
+npx eas-cli build --profile preview --platform android
+```
+
+- Configured in `eas.json` → the `preview` profile sets `distribution: internal` + `buildType: apk`
+- Once the build finishes you get an `expo.dev` link with a QR code — share it with anyone, they open it
+  on an Android phone and tap Install
+- The `.apk` never expires and doesn't need Play Store review, but Android will warn that the developer
+  is "unknown" (normal for apps distributed outside the Store) — users must allow "install from unknown
+  sources" the first time
+- **Important:** this has been verified to be a genuine release build (the JS bundle is embedded, it does
+  not depend on the developer's Metro server like a dev-client build would) — it works fully standalone
+
+## 9. Things to watch out for / next steps
+
+- **Do not upgrade tailwindcss to v4** until NativeWind v5 is stable
+- When changing the schema → bump `version` in `schema.ts` and always write a migration in `migrations.ts`
+- WatermelonDB 0.28 + SDK 57 is a newer combination than the config plugin was tested against (SDK 54) —
+  if the JSI adapter causes issues at runtime, fall back to `jsi: false` in `src/database/index.ts`
+  and `["@morrowdigital/watermelondb-expo-plugin", { "disableJsi": true }]` in `app.json`
+- WatermelonDB's decorated model fields (`@text`, `@field`, ...) must be declared as plain fields
+  (no `!` or `declare`) — both conflict with Babel's legacy decorators transform. Disable
+  `strictPropertyInitialization` in `tsconfig.json` instead
+- Ideas for future work: export/backup data to a file (still on-device), streaks/daily goals,
+  a full calendar view, a home-screen widget, biometric app lock (expo-local-authentication),
+  iOS support (requires an Apple Developer Program membership to distribute via TestFlight)

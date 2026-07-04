@@ -1,48 +1,50 @@
 # HabitTime ⏱️
 
-แอปสร้างวินัยและติดตามเวลากิจกรรม (Habit / Activity Time Tracker) สำหรับ Android
+An activity/habit time tracker app for Android.
 
-**Local-Database 100% · Offline-First · Privacy-Focused** — ข้อมูลทั้งหมดอยู่บนเครื่องผู้ใช้เท่านั้น
-ไม่มีบัญชีผู้ใช้ ไม่มีเซิร์ฟเวอร์ ไม่มีการส่งข้อมูลออกนอกเครื่อง
+**100% local database · Offline-first · Privacy-focused** — all data stays on the user's device.
+No accounts, no server, no data ever leaves the device.
 
-> 📖 เอกสารฉบับเต็ม (โครงสร้างโปรเจกต์, Database Schema, การเข้ารหัส, วิธี build):
-> ดู **[SETUP.md](./SETUP.md)**
+> 🇹🇭 ภาษาไทย: **[README.th.md](./README.th.md)**
 
-## 📲 ติดตั้งแอป (สำหรับผู้ใช้ทั่วไป — ไม่ต้องเขียนโค้ด)
+> 📖 Full documentation (project structure, database schema, encryption, build steps):
+> see **[SETUP.md](./SETUP.md)**
 
-ไม่ต้องคลอนโปรเจกต์หรือ build เอง แค่ดาวน์โหลด `.apk` แล้วติดตั้งตรงบนมือถือ Android:
+## 📲 Install the app (for regular users — no coding required)
 
-1. เปิดลิงก์นี้บนมือถือ Android (หรือสแกน QR code ในหน้านั้น):
+No need to clone the repo or build anything. Just download the `.apk` and install it directly on your Android phone:
+
+1. Open this link on your Android phone (or scan the QR code on that page):
    👉 **https://expo.dev/accounts/devaflow/projects/myapp/builds/bd31fa41-c4c5-4763-ad02-756435899b19**
-2. กด **Install** เพื่อดาวน์โหลดไฟล์ `.apk`
-3. ถ้าเป็นการติดตั้งแอปนอก Play Store ครั้งแรก Android จะขออนุญาต **"ติดตั้งแอปที่ไม่รู้จัก" (Install unknown apps)**
-   → กด **อนุญาต/Allow** สำหรับเบราว์เซอร์หรือแอปที่ใช้เปิดลิงก์ แล้วกดติดตั้งอีกครั้ง
-4. เปิดแอป **HabitTime** ได้เลย ไม่ต้องล็อกอิน ไม่ต้องต่อเน็ต — ข้อมูลทั้งหมดอยู่ในเครื่องเท่านั้น
+2. Tap **Install** to download the `.apk` file.
+3. If this is your first time installing an app outside the Play Store, Android will ask for permission to
+   **"Install unknown apps"** → tap **Allow** for the browser/app you used to open the link, then install again.
+4. Open the **HabitTime** app — no login, no internet connection needed. All your data stays on your device.
 
-> ⚠️ ไฟล์นี้ไม่ได้เซ็นชื่อผ่าน Play Store (เป็น internal build ของ Expo) — Android/Play Protect
-> อาจเตือนว่า "ไม่รู้จักผู้พัฒนา" ซึ่งเป็นเรื่องปกติสำหรับแอปที่แจกนอก Store ไม่ใช่ไวรัส
-> สามารถกด "ติดตั้งต่อ" ได้ตามปกติ
+> ⚠️ This file isn't signed through the Play Store (it's an internal Expo build) — Android/Play Protect
+> may warn that the developer is "unknown." This is normal for apps distributed outside the Store,
+> not a virus. You can safely tap "Install anyway."
 
 ## Tech Stack
 
-| ส่วน | เทคโนโลยี |
+| Part | Technology |
 | --- | --- |
 | Framework | Expo SDK 57 (React Native 0.86) + Expo Prebuild (dev client) |
-| ภาษา | TypeScript (strict) |
-| ฐานข้อมูล | WatermelonDB 0.28 (SQLite + JSI) — บนเครื่องเท่านั้น |
-| การเข้ารหัส | AES-256-GCM ระดับฟิลด์ (@noble/ciphers) + กุญแจใน Android Keystore (expo-secure-store) |
+| Language | TypeScript (strict) |
+| Database | WatermelonDB 0.28 (SQLite) — on-device only |
+| Encryption | Field-level AES-256-GCM (`@noble/ciphers`) + key stored in the Android Keystore (`expo-secure-store`) |
 | State | Zustand 5 |
-| UI | NativeWind 4 (Tailwind CSS 3.4) ธีมมืด |
-| แจ้งเตือน | expo-notifications (local ล้วน ไม่มี push server) |
+| UI | NativeWind 4 (Tailwind CSS 3.4), dark theme |
+| Notifications | expo-notifications (fully local, no push server) |
 
-## เริ่มต้นแบบเร็ว
+## Quick start (for developers)
 
 ```bash
 npm install
-npx expo prebuild --platform android   # สร้างโฟลเดอร์ android/ (ทำไว้ให้แล้ว)
-npx expo run:android                   # ต้องมี JDK 17 + Android Studio/SDK
+npx expo prebuild --platform android   # generates the android/ folder (already done)
+npx expo run:android                   # requires JDK 17+ and Android Studio/SDK
 ```
 
-⚠️ **สำคัญ:** WatermelonDB เป็น native module — รันใน **Expo Go ไม่ได้** ต้อง build dev client
-และก่อน build จริง **ย้ายโปรเจกต์ไป path ภาษาอังกฤษล้วนไม่มีช่องว่าง** เช่น `D:\code\HabitTime`
-(path ที่มีภาษาไทย/ช่องว่างทำให้ CMake/Ninja ของ Android build พังบน Windows — ดูรายละเอียดใน SETUP.md)
+⚠️ **Important:** WatermelonDB is a native module — it **cannot run in Expo Go**, you must build a dev client.
+Also, before building, **make sure your project path contains no spaces or non-ASCII characters**
+(e.g. `C:\projects\HabitTime` works, `C:\My Projects\HabitTime` does not) — see [SETUP.md](./SETUP.md) for details.

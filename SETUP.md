@@ -175,11 +175,11 @@ npx expo prebuild --platform android
 3. ตั้ง env var `ANDROID_HOME = %LOCALAPPDATA%\Android\Sdk`
 
 > ### ⚠️ ต้องย้ายโปรเจกต์ก่อน build
-> path ปัจจุบัน `D:\code\โปรเจ็คจบ\App onboarding\HabitTime` มี**ภาษาไทย + ช่องว่าง**
+> path ปัจจุบัน `D:\code\HabitTime` มี**ภาษาไทย + ช่องว่าง**
 > ซึ่งทำให้ CMake/Ninja ของ Android build ล้มเหลวบน Windows (ปัญหาที่รู้จักกันดีของ RN/Expo)
 > ให้ย้ายทั้งโฟลเดอร์ไป path อังกฤษล้วน เช่น:
 > ```powershell
-> Move-Item "D:\code\โปรเจ็คจบ\App onboarding\HabitTime" "D:\code\HabitTime"
+> Move-Item "D:\code\HabitTime" "D:\code\HabitTime"
 > ```
 > การเขียนโค้ด/`tsc`/`prebuild` ทำที่ path เดิมได้ แต่ `run:android` ควรทำหลังย้ายแล้วเท่านั้น
 

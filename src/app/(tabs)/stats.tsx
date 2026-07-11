@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Calendar, ChartColumn } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -54,7 +54,7 @@ export default function StatsScreen() {
               className="h-10 w-10 items-center justify-center rounded-full bg-surface"
               style={cardShadow}
             >
-              <Ionicons name="calendar-outline" size={18} color={c.ink} />
+              <Calendar size={18} color={c.ink} />
             </View>
           }
         />
@@ -74,7 +74,7 @@ export default function StatsScreen() {
 
         {/* ใช้เวลามากที่สุด */}
         {stats.byActivity.length === 0 ? (
-          <EmptyState emoji="📊" message={STR.stats.noData} />
+          <EmptyState icon={ChartColumn} message={STR.stats.noData} />
         ) : (
           <View className="mt-6 px-5">
             <Text className="mb-3 text-base font-extrabold text-ink">{STR.stats.mostUsed}</Text>

@@ -1,5 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import {
+  Bell,
+  ChevronRight,
+  Flag,
+  Flame,
+  LogOut,
+  Pencil,
+  Settings,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -53,7 +62,7 @@ export default function ProfileScreen() {
             className="mt-3 flex-row items-center rounded-full px-3 py-1.5"
             style={{ backgroundColor: 'rgba(242,107,58,0.14)' }}
           >
-            <Ionicons name="flame" size={13} color="#F26B3A" />
+            <Flame size={13} color="#F26B3A" />
             <Text className="ml-1.5 text-xs font-bold" style={{ color: '#D9531F' }}>
               {STR.profile.streak} {streak} {STR.profile.days}
             </Text>
@@ -71,19 +80,19 @@ export default function ProfileScreen() {
 
         {/* เมนู กลุ่มบัญชี */}
         <View className="mx-5 mt-5 overflow-hidden rounded-2xl bg-surface" style={cardShadow}>
-          <MenuRow icon="create-outline" label={STR.profile.editProfile} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Pencil} label={STR.profile.editProfile} onPress={() => router.push('/settings')} />
           <RowDivider />
-          <MenuRow icon="flag-outline" label={STR.profile.dailyGoal} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Flag} label={STR.profile.dailyGoal} onPress={() => router.push('/settings')} />
           <RowDivider />
-          <MenuRow icon="notifications-outline" label={STR.profile.notifications} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Bell} label={STR.profile.notifications} onPress={() => router.push('/settings')} />
         </View>
 
         {/* เมนู กลุ่มระบบ */}
         <View className="mx-5 mt-4 overflow-hidden rounded-2xl bg-surface" style={cardShadow}>
-          <MenuRow icon="settings-outline" label={STR.profile.settings} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Settings} label={STR.profile.settings} onPress={() => router.push('/settings')} />
           <RowDivider />
           <MenuRow
-            icon="log-out-outline"
+            icon={LogOut}
             label={STR.profile.logout}
             danger
             onPress={() => setConfirmLogout(true)}
@@ -127,12 +136,12 @@ function RowDivider() {
 }
 
 function MenuRow({
-  icon,
+  icon: Icon,
   label,
   onPress,
   danger,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   label: string;
   onPress: () => void;
   danger?: boolean;
@@ -142,12 +151,12 @@ function MenuRow({
   return (
     <Pressable onPress={onPress} className="flex-row items-center px-4 py-3.5 active:bg-surface2">
       <View className="h-8 w-8 items-center justify-center">
-        <Ionicons name={icon} size={20} color={danger ? c.danger : c.primary} />
+        <Icon size={20} color={danger ? c.danger : c.primary} />
       </View>
       <Text className="ml-2 flex-1 text-[15px] font-medium" style={{ color }}>
         {label}
       </Text>
-      {!danger && <Ionicons name="chevron-forward" size={18} color={c.subtle} />}
+      {!danger && <ChevronRight size={18} color={c.subtle} />}
     </Pressable>
   );
 }

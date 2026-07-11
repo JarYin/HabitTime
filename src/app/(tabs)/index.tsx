@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { Bell, Flame, Plus, Target, Timer, type LucideIcon } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -74,7 +74,7 @@ export default function DashboardScreen() {
             className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
             style={cardShadow}
           >
-            <Ionicons name="notifications-outline" size={20} color={c.ink} />
+            <Bell size={20} color={c.ink} />
           </Pressable>
         </View>
 
@@ -95,13 +95,13 @@ export default function DashboardScreen() {
         {/* การ์ดสถิติคู่: streak + กิจกรรมวันนี้ */}
         <View className="mx-5 mt-3 flex-row gap-3">
           <StatCard
-            icon="flame"
+            icon={Flame}
             iconColor="#F26B3A"
             value={STR.dashboard.streakValue(streak)}
             label={STR.dashboard.streak}
           />
           <StatCard
-            icon="locate"
+            icon={Target}
             iconColor={c.primary}
             value={`${activitiesTodayCount} / ${activities.length}`}
             label={STR.dashboard.activitiesToday}
@@ -120,7 +120,7 @@ export default function DashboardScreen() {
 
         <View className="mt-3 px-5">
           {activities.length === 0 ? (
-            <EmptyState emoji="⏱️" message={STR.dashboard.empty} />
+            <EmptyState icon={Timer} message={STR.dashboard.empty} />
           ) : (
             activities.slice(0, DASHBOARD_ACTIVITY_LIMIT).map((activity) => (
               <ActivityCard
@@ -142,26 +142,26 @@ export default function DashboardScreen() {
         className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary active:opacity-85"
         style={primaryShadow}
       >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
+        <Plus size={30} color="#FFFFFF" />
       </Pressable>
     </Screen>
   );
 }
 
 function StatCard({
-  icon,
+  icon: Icon,
   iconColor,
   value,
   label,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   iconColor: string;
   value: string;
   label: string;
 }) {
   return (
     <View className="flex-1 rounded-2xl bg-surface p-3.5" style={cardShadow}>
-      <Ionicons name={icon} size={18} color={iconColor} />
+      <Icon size={18} color={iconColor} />
       <Text className="mt-2 text-lg font-extrabold text-ink">{value}</Text>
       <Text className="text-[11px] text-muted">{label}</Text>
     </View>

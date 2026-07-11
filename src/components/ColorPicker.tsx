@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Check } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
 import { ACTIVITY_COLORS } from '@/constants/palette';
@@ -27,7 +27,7 @@ export default function ColorPicker({ value, onChange }: ColorPickerProps) {
               borderColor: c.primaryDeep,
             }}
           >
-            {selected && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
+            {selected && <Check size={20} color="#FFFFFF" />}
           </Pressable>
         );
       })}

@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { ChartColumn, Circle, History, House, User, type LucideIcon } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,12 +11,18 @@ import { STR } from '@/constants/strings';
  * หน้าแรก / ประวัติ / สถิติ / โปรไฟล์
  * แท็บที่เลือกจะมี pill สีน้ำเงินอ่อนใต้ไอคอน + ไอคอน/ข้อความสีน้ำเงิน
  */
-const TAB_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
-  index: 'home',
-  history: 'time',
-  stats: 'bar-chart',
-  profile: 'body',
+const TAB_ICON: Record<string, LucideIcon> = {
+  index: House,
+  history: History,
+  stats: ChartColumn,
+  profile: User,
 };
+
+/**
+ * แท็บที่แสดงจริง (ลำดับตามนี้) — กรองด้วยชื่อ route โดยตรงแทนการพึ่ง
+ * options.href === null เพราะ custom tabBar ไม่เห็นค่านั้นถูก merge เข้ามาเสมอ
+ */
+const VISIBLE_TAB_NAMES = ['index', 'history', 'stats', 'profile'];
 
 function TabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -32,10 +38,10 @@ function TabBar({ state, descriptors, navigation }: any) {
     >
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
-        if (options.href === null) return null;
+        if (options.href === null || !VISIBLE_TAB_NAMES.includes(route.name)) return null;
         const label = options.title ?? route.name;
         const focused = state.index === index;
-        const icon = TAB_ICON[route.name] ?? 'ellipse';
+        const Icon = TAB_ICON[route.name] ?? Circle;
 
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -48,7 +54,7 @@ function TabBar({ state, descriptors, navigation }: any) {
               className="items-center justify-center rounded-lg px-4 py-1"
               style={{ backgroundColor: focused ? c.primarySoft : 'transparent' }}
             >
-              <Ionicons name={icon} size={22} color={focused ? c.primaryDeep : c.subtle} />
+              <Icon size={22} color={focused ? c.primaryDeep : c.subtle} />
             </View>
             <Text
               className="mt-0.5 text-[11px]"

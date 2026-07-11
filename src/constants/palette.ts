@@ -80,22 +80,16 @@ export const ACTIVITY_COLORS = [
   '#4E853F', // เขียวใบไม้
 ] as const;
 
-/** อิโมจิให้เลือกตอนสร้างกิจกรรม (use case "เลือกอิโมจิ") */
-export const ACTIVITY_EMOJIS = [
-  '📚', '💪', '🧠', '💻', '🎸', '🎨',
-  '✍️', '🎧', '🪴', '☕', '🎉', '⋯',
-  '📖', '🏃', '🧘', '🎯', '📝', '🗂️',
-  '🎮', '📷', '🍳', '🌱', '🌙', '😴',
-  '🙏', '❤️', '🐶', '🗣️', '💧', '⚽',
-] as const;
-
-/** หมวดหมู่เริ่มต้น — seed ลงฐานข้อมูลตอนเปิดแอปครั้งแรก (สีตามดีไซน์ Figma) */
+/**
+ * หมวดหมู่เริ่มต้น — seed ลงฐานข้อมูลตอนเปิดแอปครั้งแรก (สีตามดีไซน์ Figma)
+ * ช่อง emoji เก็บ "ชื่อไอคอน lucide" (ดู @/constants/icons)
+ */
 export const DEFAULT_CATEGORIES = [
-  { name: 'เรียนรู้', emoji: '📚', color: '#84E0EE' },
-  { name: 'สุขภาพ', emoji: '💪', color: '#5DEE7F' },
-  { name: 'จิตใจ', emoji: '🧘', color: '#95B8E0' },
-  { name: 'ทำงาน', emoji: '💻', color: '#E57D9C' },
-  { name: 'งานอดิเรก', emoji: '🎨', color: '#DEE97B' },
-  { name: 'ฝึกฝน', emoji: '🎸', color: '#DF6633' },
-  { name: 'อื่น ๆ', emoji: '✨', color: '#397D84' },
+  { name: 'เรียนรู้', emoji: 'book-open', color: '#84E0EE' },
+  { name: 'สุขภาพ', emoji: 'dumbbell', color: '#5DEE7F' },
+  { name: 'จิตใจ', emoji: 'brain', color: '#95B8E0' },
+  { name: 'ทำงาน', emoji: 'laptop', color: '#E57D9C' },
+  { name: 'งานอดิเรก', emoji: 'palette', color: '#DEE97B' },
+  { name: 'ฝึกฝน', emoji: 'guitar', color: '#DF6633' },
+  { name: 'อื่น ๆ', emoji: 'ellipsis', color: '#397D84' },
 ] as const;

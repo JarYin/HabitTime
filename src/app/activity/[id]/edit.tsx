@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable } from 'react-native';
 
@@ -34,7 +34,7 @@ export default function EditActivityScreen() {
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
           >
-            <Ionicons name="trash-outline" size={20} color={c.danger} />
+            <Trash2 size={20} color={c.danger} />
           </Pressable>
         }
       />

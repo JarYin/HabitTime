@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Calendar, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, SectionList, Text, TextInput, View } from 'react-native';
 
@@ -78,14 +78,14 @@ export default function HistoryScreen() {
             className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
             style={cardShadow}
           >
-            <Ionicons name="search" size={18} color={c.ink} />
+            <Search size={18} color={c.ink} />
           </Pressable>
         }
       />
 
       {searchOpen && (
         <View className="mx-5 mt-3 flex-row items-center rounded-2xl bg-surface px-3" style={cardShadow}>
-          <Ionicons name="search" size={18} color={c.muted} />
+          <Search size={18} color={c.muted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
@@ -107,7 +107,7 @@ export default function HistoryScreen() {
         contentContainerClassName="px-5 pb-10 pt-2"
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<EmptyState emoji="🗓️" message={STR.history.empty} />}
+        ListEmptyComponent={<EmptyState icon={Calendar} message={STR.history.empty} />}
         renderSectionHeader={({ section }) => (
           <View className="mb-2 mt-4 flex-row items-center justify-between">
             <Text className="text-sm font-bold text-ink">{section.title}</Text>

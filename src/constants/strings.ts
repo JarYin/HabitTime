@@ -17,11 +17,7 @@ export const STR = {
 
   landing: {
     tagline: 'สร้างวินัย จัดการเวลาของคุณ',
-    features: [
-      { emoji: '🎯', label: 'ตั้งเป้า' },
-      { emoji: '⏱️', label: 'จับเวลา' },
-      { emoji: '📊', label: 'ดูสถิติ' },
-    ],
+    features: [{ label: 'ตั้งเป้า' }, { label: 'จับเวลา' }, { label: 'ดูสถิติ' }],
     start: 'เริ่มต้นใช้งาน',
     haveAccount: 'ฉันมีบัญชีอยู่แล้ว',
   },
@@ -110,7 +106,7 @@ export const STR = {
     name: 'ชื่อกิจกรรม',
     namePlaceholder: 'เช่น อ่านหนังสือสอบ, วิ่งตอนเช้า',
     category: 'หมวดหมู่',
-    emoji: 'อิโมจิ',
+    emoji: 'สัญลักษณ์',
     color: 'สี',
     save: 'บันทึกกิจกรรม',
     saveEdit: 'บันทึกการแก้ไข',

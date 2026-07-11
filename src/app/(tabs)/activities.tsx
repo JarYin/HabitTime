@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { ChevronLeft, Plus, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, TextInput, View } from 'react-native';
 
@@ -47,13 +47,13 @@ export default function ActivitiesScreen() {
           hitSlop={8}
           className="h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
         >
-          <Ionicons name="chevron-back" size={24} color={c.ink} />
+          <ChevronLeft size={24} color={c.ink} />
         </Pressable>
         <ScreenHeader title={STR.activities.title} className="flex-1 px-1" />
       </View>
 
       <View className="mt-4 flex-row items-center rounded-2xl bg-surface mx-5 px-3" style={cardShadow}>
-        <Ionicons name="search" size={18} color={c.muted} />
+        <Search size={18} color={c.muted} />
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -72,7 +72,7 @@ export default function ActivitiesScreen() {
         keyExtractor={(a) => a.id}
         contentContainerClassName="px-5 pb-28 pt-3"
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<EmptyState emoji="🔎" message={STR.activities.empty} />}
+        ListEmptyComponent={<EmptyState icon={Search} message={STR.activities.empty} />}
         renderItem={({ item }) => (
           <ActivityCard
             activity={item}
@@ -89,7 +89,7 @@ export default function ActivitiesScreen() {
         className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary active:opacity-85"
         style={primaryShadow}
       >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
+        <Plus size={30} color="#FFFFFF" />
       </Pressable>
     </Screen>
   );

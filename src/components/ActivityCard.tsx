@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Play } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import IconTile from '@/components/ui/IconTile';
@@ -39,7 +39,7 @@ export default function ActivityCard({
         elevation: 1,
       }}
     >
-      <IconTile emoji={activity.emoji} color={activity.color} size={40} />
+      <IconTile icon={activity.emoji} color={activity.color} size={40} />
 
       <View className="ml-3 flex-1">
         <Text className="text-[15px] font-bold text-ink" numberOfLines={1}>
@@ -57,7 +57,7 @@ export default function ActivityCard({
         hitSlop={8}
         className="ml-2 h-9 w-9 items-center justify-center rounded-full bg-primary active:opacity-80"
       >
-        <Ionicons name="play" size={16} color="#FFFFFF" />
+        <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
       </Pressable>
     </Pressable>
   );

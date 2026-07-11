@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { ChartColumn, Target, Timer, type LucideIcon } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 
 import PrimaryButton from '@/components/ui/PrimaryButton';
@@ -9,7 +9,7 @@ import { STR } from '@/constants/strings';
 import { setOnboardingDone } from '@/services/settingsService';
 import { useAppStore } from '@/stores/appStore';
 
-const FEATURE_ICONS: (keyof typeof Ionicons.glyphMap)[] = ['locate', 'stopwatch', 'bar-chart'];
+const FEATURE_ICONS: LucideIcon[] = [Target, Timer, ChartColumn];
 
 /**
  * หน้าเริ่มต้นใช้งาน (Landing) — โลโก้แอป + จุดเด่น 3 อย่าง + ปุ่มเข้าใช้งาน/เข้าสู่ระบบ
@@ -38,34 +38,37 @@ export default function LandingScreen() {
             elevation: 8,
           }}
         >
-          <Ionicons name="timer-outline" size={44} color="#FFFFFF" />
+          <Timer size={44} color="#FFFFFF" />
         </View>
         <Text className="mt-5 text-3xl font-extrabold text-ink">{STR.appName}</Text>
         <Text className="mt-2 text-sm text-muted">{STR.landing.tagline}</Text>
 
         {/* จุดเด่น 3 อย่าง */}
         <View className="mt-10 w-full flex-row justify-between">
-          {STR.landing.features.map((feat, i) => (
-            <View
-              key={feat.label}
-              className="mx-1.5 flex-1 items-center rounded-2xl bg-surface py-5"
-              style={{
-                shadowColor: '#000',
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 3 },
-                elevation: 1,
-              }}
-            >
+          {STR.landing.features.map((feat, i) => {
+            const Icon = FEATURE_ICONS[i];
+            return (
               <View
-                className="h-11 w-11 items-center justify-center rounded-full"
-                style={{ backgroundColor: 'rgba(15,46,245,0.12)' }}
+                key={feat.label}
+                className="mx-1.5 flex-1 items-center rounded-2xl bg-surface py-5"
+                style={{
+                  shadowColor: '#000',
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 3 },
+                  elevation: 1,
+                }}
               >
-                <Ionicons name={FEATURE_ICONS[i]} size={22} color={c.primary} />
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: 'rgba(15,46,245,0.12)' }}
+                >
+                  <Icon size={22} color={c.primary} />
+                </View>
+                <Text className="mt-3 text-xs font-semibold text-ink">{feat.label}</Text>
               </View>
-              <Text className="mt-3 text-xs font-semibold text-ink">{feat.label}</Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
 

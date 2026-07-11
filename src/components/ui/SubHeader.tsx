@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
@@ -21,7 +21,7 @@ export default function SubHeader({ title, right }: SubHeaderProps) {
           hitSlop={8}
           className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
         >
-          <Ionicons name="chevron-back" size={24} color={c.ink} />
+          <ChevronLeft size={24} color={c.ink} />
         </Pressable>
         <Text className="text-lg font-bold text-ink">{title}</Text>
       </View>

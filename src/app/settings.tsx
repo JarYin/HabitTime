@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Lock, Minus, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
@@ -155,7 +155,7 @@ export default function SettingsScreen() {
         {/* ความเป็นส่วนตัว */}
         <View className="mt-4 rounded-2xl border border-stroke bg-surface p-4">
           <View className="flex-row items-center">
-            <Ionicons name="lock-closed" size={16} color={c.success} />
+            <Lock size={16} color={c.success} />
             <Text className="ml-2 text-base font-semibold text-ink">
               {STR.settings.privacyTitle}
             </Text>
@@ -203,11 +203,11 @@ function Stepper({
   return (
     <View className="flex-row items-center rounded-xl border border-stroke bg-surface2">
       <Pressable onPress={onDec} hitSlop={6} className="px-3 py-2">
-        <Ionicons name="remove" size={16} color={c.muted} />
+        <Minus size={16} color={c.muted} />
       </Pressable>
       <Text className="w-8 text-center text-lg font-bold text-ink">{children}</Text>
       <Pressable onPress={onInc} hitSlop={6} className="px-3 py-2">
-        <Ionicons name="add" size={16} color={c.muted} />
+        <Plus size={16} color={c.muted} />
       </Pressable>
     </View>
   );

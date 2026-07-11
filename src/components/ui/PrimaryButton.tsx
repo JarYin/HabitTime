@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, Text } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
@@ -6,7 +6,8 @@ import { useColors } from '@/hooks/useColors';
 interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  /** คอมโพเนนต์ไอคอนจาก lucide-react-native */
+  icon?: LucideIcon;
   variant?: 'primary' | 'outline' | 'danger';
   className?: string;
 }
@@ -15,7 +16,7 @@ interface PrimaryButtonProps {
 export default function PrimaryButton({
   label,
   onPress,
-  icon,
+  icon: Icon,
   variant = 'primary',
   className,
 }: PrimaryButtonProps) {
@@ -34,7 +35,7 @@ export default function PrimaryButton({
       onPress={onPress}
       className={`flex-row items-center justify-center rounded-2xl py-4 active:opacity-85 ${bg} ${border} ${className ?? ''}`}
     >
-      {icon && <Ionicons name={icon} size={18} color={iconColor} style={{ marginRight: 8 }} />}
+      {Icon && <Icon size={18} color={iconColor} style={{ marginRight: 8 }} />}
       <Text className={`text-base font-bold ${textColor}`}>{label}</Text>
     </Pressable>
   );

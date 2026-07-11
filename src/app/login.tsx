@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
@@ -34,7 +34,7 @@ export default function LoginScreen() {
         hitSlop={8}
         className="mt-1 h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
       >
-        <Ionicons name="chevron-back" size={24} color={c.ink} />
+        <ChevronLeft size={24} color={c.ink} />
       </Pressable>
 
       <Text className="mt-3 text-2xl font-extrabold text-ink">{STR.login.welcomeBack}</Text>
@@ -64,7 +64,7 @@ export default function LoginScreen() {
       {/* อีเมล */}
       <Text className="mb-2 mt-7 text-sm font-semibold text-muted">{STR.login.email}</Text>
       <View className="flex-row items-center rounded-2xl bg-surface px-4">
-        <Ionicons name="mail-outline" size={18} color={c.muted} />
+        <Mail size={18} color={c.muted} />
         <TextInput
           value={email}
           onChangeText={setEmail}
@@ -79,7 +79,7 @@ export default function LoginScreen() {
       {/* รหัสผ่าน */}
       <Text className="mb-2 mt-4 text-sm font-semibold text-muted">{STR.login.password}</Text>
       <View className="flex-row items-center rounded-2xl bg-surface px-4">
-        <Ionicons name="lock-closed-outline" size={18} color={c.muted} />
+        <Lock size={18} color={c.muted} />
         <TextInput
           value={password}
           onChangeText={setPassword}
@@ -89,11 +89,7 @@ export default function LoginScreen() {
           className="ml-2 flex-1 py-3.5 text-base text-ink"
         />
         <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
-          <Ionicons
-            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-            size={18}
-            color={c.muted}
-          />
+          {showPassword ? <EyeOff size={18} color={c.muted} /> : <Eye size={18} color={c.muted} />}
         </Pressable>
       </View>
 

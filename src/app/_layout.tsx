@@ -1,7 +1,5 @@
 import '../global.css';
 
-import { Ionicons } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -26,8 +24,7 @@ export default function RootLayout() {
   const colors = useColors();
   const { colorScheme } = useColorScheme();
 
-  // โหลดฟอนต์ไอคอน Ionicons ล่วงหน้า — กันปัญหาไอคอนไม่ขึ้น (แสดงเป็นกล่องว่าง) ตอนเปิดแอป
-  const [fontsLoaded] = useFonts({ ...Ionicons.font });
+  // ไอคอนทั้งแอปเป็น lucide-react-native (SVG) — ไม่ต้อง preload ฟอนต์ไอคอนอีก
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +40,8 @@ export default function RootLayout() {
       } catch (error) {
         console.error('[HabitTime] app init failed', error);
         if (!cancelled) setReady(false);
+      } finally {
+        SplashScreen.hideAsync();
       }
     })();
     return () => {
@@ -50,12 +49,7 @@ export default function RootLayout() {
     };
   }, [setReady, hydrateTheme]);
 
-  // ซ่อน splash เมื่อพร้อมทั้ง init และฟอนต์ไอคอน (กันจอว่างระหว่างรอฟอนต์)
-  useEffect(() => {
-    if (ready && fontsLoaded) SplashScreen.hideAsync();
-  }, [ready, fontsLoaded]);
-
-  if (!ready || !fontsLoaded) return null;
+  if (!ready) return null;
 
   return (
     <>

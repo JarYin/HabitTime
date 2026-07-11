@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Check, Pause, Play, Square, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, ToastAndroid, View } from 'react-native';
 
@@ -79,7 +79,7 @@ export default function TimerScreen() {
       <View className="flex-1 items-center px-8">
         {/* ชิปกิจกรรม */}
         <View className="mt-2 flex-row items-center rounded-full bg-surface py-1.5 pl-1.5 pr-5" style={cardShadow}>
-          <IconTile emoji={activity.emoji} color={activity.color} size={30} className="rounded-full" />
+          <IconTile icon={activity.emoji} color={activity.color} size={30} className="rounded-full" />
           <Text className="ml-2 text-base font-bold text-ink" numberOfLines={1}>
             {activity.name}
           </Text>
@@ -118,21 +118,21 @@ export default function TimerScreen() {
           <ControlButton
             label={STR.timer.stopLabel}
             onPress={() => setConfirmStop(true)}
-            icon="stop"
+            icon={Square}
             size={56}
             variant="light"
           />
           <ControlButton
             label={isRunning ? STR.timer.pause : STR.timer.resume}
             onPress={() => (isRunning ? timer.pause() : timer.resume())}
-            icon={isRunning ? 'pause' : 'play'}
+            icon={isRunning ? Pause : Play}
             size={72}
             variant="primary"
           />
           <ControlButton
             label={STR.timer.saveLabel}
             onPress={() => void stopAndSave()}
-            icon="checkmark"
+            icon={Check}
             size={56}
             variant="light"
           />
@@ -159,13 +159,13 @@ export default function TimerScreen() {
 function ControlButton({
   label,
   onPress,
-  icon,
+  icon: Icon,
   size,
   variant,
 }: {
   label: string;
   onPress: () => void;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   size: number;
   variant: 'primary' | 'light';
 }) {
@@ -183,7 +183,7 @@ function ControlButton({
           ...cardShadow,
         }}
       >
-        <Ionicons name={icon} size={isPrimary ? 30 : 22} color={isPrimary ? '#FFFFFF' : c.ink} />
+        <Icon size={isPrimary ? 30 : 22} color={isPrimary ? '#FFFFFF' : c.ink} />
       </Pressable>
       <Text className="mt-2 text-xs font-semibold text-muted">{label}</Text>
     </View>

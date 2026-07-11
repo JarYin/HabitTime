@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Pencil, Play } from 'lucide-react-native';
 import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -44,14 +44,14 @@ export default function ActivityDetailScreen() {
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
           >
-            <Ionicons name="create-outline" size={20} color={c.primary} />
+            <Pencil size={20} color={c.primary} />
           </Pressable>
         }
       />
 
       <ScrollView contentContainerClassName="pb-10" showsVerticalScrollIndicator={false}>
         <View className="items-center px-5">
-          <IconTile emoji={activity.emoji} color={activity.color} size={80} className="rounded-3xl" />
+          <IconTile icon={activity.emoji} color={activity.color} size={80} className="rounded-3xl" />
           <Text className="mt-3 text-center text-2xl font-extrabold text-ink">{activity.name}</Text>
         </View>
 
@@ -69,7 +69,7 @@ export default function ActivityDetailScreen() {
         <View className="mx-5 mt-5">
           <PrimaryButton
             label={STR.detail.startTimer}
-            icon="play"
+            icon={Play}
             onPress={() => router.push(`/timer/${activity.id}`)}
           />
         </View>

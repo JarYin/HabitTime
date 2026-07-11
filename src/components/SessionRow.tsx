@@ -28,7 +28,7 @@ export default function SessionRow({ session, activity, subtitle }: SessionRowPr
         elevation: 1,
       }}
     >
-      <IconTile emoji={activity?.emoji ?? '⏱️'} color={activity?.color ?? '#A6A2AC'} size={38} />
+      <IconTile icon={activity?.emoji} color={activity?.color ?? '#A6A2AC'} size={38} />
       <View className="ml-3 flex-1">
         <Text className="text-sm font-bold text-ink" numberOfLines={1}>
           {activity?.name ?? '—'}

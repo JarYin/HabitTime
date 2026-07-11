@@ -1,11 +1,13 @@
+import { Check, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import ColorPicker from '@/components/ColorPicker';
-import EmojiPicker from '@/components/EmojiPicker';
+import IconPicker from '@/components/IconPicker';
 import IconTile from '@/components/ui/IconTile';
 import PrimaryButton from '@/components/ui/PrimaryButton';
-import { ACTIVITY_COLORS, ACTIVITY_EMOJIS } from '@/constants/palette';
+import { ACTIVITY_ICONS } from '@/constants/icons';
+import { ACTIVITY_COLORS } from '@/constants/palette';
 import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import type { Category } from '@/database/models';
@@ -34,7 +36,7 @@ export default function ActivityForm({
   const c = useColors();
   const [name, setName] = useState(initial?.name ?? '');
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? '');
-  const [emoji, setEmoji] = useState(initial?.emoji ?? ACTIVITY_EMOJIS[0]);
+  const [emoji, setEmoji] = useState<string>(initial?.emoji ?? ACTIVITY_ICONS[0]);
   const [color, setColor] = useState(initial?.color ?? ACTIVITY_COLORS[0]);
   const [error, setError] = useState('');
 
@@ -55,7 +57,7 @@ export default function ActivityForm({
     >
       {/* พรีวิวไอคอน */}
       <View className="mt-1 items-center">
-        <IconTile emoji={emoji} color={color} size={64} className="rounded-2xl" />
+        <IconTile icon={emoji} color={color} size={64} className="rounded-2xl" />
       </View>
 
       {/* ชื่อกิจกรรม */}
@@ -109,7 +111,7 @@ export default function ActivityForm({
 
       {/* สัญลักษณ์ */}
       <Text className="mb-3 mt-6 text-sm font-semibold text-muted">{STR.form.emoji}</Text>
-      <EmojiPicker value={emoji} onChange={setEmoji} />
+      <IconPicker value={emoji} onChange={setEmoji} />
 
       {/* ปุ่ม */}
       {onCancel ? (
@@ -118,13 +120,13 @@ export default function ActivityForm({
             label={STR.detail.cancel}
             onPress={onCancel}
             variant="danger"
-            icon="close"
+            icon={X}
             className="flex-1"
           />
           <PrimaryButton
             label={STR.form.saveEdit}
             onPress={handleSubmit}
-            icon="checkmark"
+            icon={Check}
             className="flex-1"
           />
         </View>
@@ -132,7 +134,7 @@ export default function ActivityForm({
         <PrimaryButton
           label={submitLabel}
           onPress={handleSubmit}
-          icon="checkmark"
+          icon={Check}
           className="mt-8"
         />
       )}

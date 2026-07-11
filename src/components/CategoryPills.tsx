@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text } from 'react-native';
 
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import type { Category } from '@/database/models';
 
@@ -10,7 +11,7 @@ interface CategoryPillsProps {
   onSelect: (id: string | null) => void;
 }
 
-/** แถบตัวกรองหมวดหมู่แนวนอน (use case "กรองตามหมวดหมู่") */
+/** แถบตัวกรองหมวดหมู่แนวนอน (use case "กรองตามหมวดหมู่") — สไตล์ Figma */
 export default function CategoryPills({ categories, selectedId, onSelect }: CategoryPillsProps) {
   return (
     <ScrollView
@@ -27,7 +28,7 @@ export default function CategoryPills({ categories, selectedId, onSelect }: Cate
       {categories.map((cat) => (
         <Pill
           key={cat.id}
-          label={`${cat.emoji} ${cat.name}`}
+          label={cat.name}
           active={selectedId === cat.id}
           onPress={() => onSelect(cat.id)}
         />
@@ -37,14 +38,29 @@ export default function CategoryPills({ categories, selectedId, onSelect }: Cate
 }
 
 function Pill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const c = useColors();
   return (
     <Pressable
       onPress={onPress}
-      className={`rounded-full border px-4 py-2 ${
-        active ? 'border-primary bg-primarySoft' : 'border-stroke bg-surface'
-      }`}
+      className="rounded-full px-4 py-2"
+      style={{
+        backgroundColor: active ? c.primarySoft : c.surface,
+        borderWidth: 1,
+        borderColor: active ? c.primaryDeep : 'transparent',
+        shadowColor: '#000',
+        shadowOpacity: active ? 0 : 0.04,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: active ? 0 : 1,
+      }}
     >
-      <Text className={`text-sm ${active ? 'font-semibold text-primary' : 'text-muted'}`}>
+      <Text
+        className="text-sm"
+        style={{
+          color: active ? c.primaryDeep : c.muted,
+          fontWeight: active ? '700' : '500',
+        }}
+      >
         {label}
       </Text>
     </Pressable>

@@ -3,9 +3,12 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
 import Screen from '@/components/ui/Screen';
+import Segmented from '@/components/ui/Segmented';
 import SubHeader from '@/components/ui/SubHeader';
-import { THEME } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
+import type { ThemeMode } from '@/services/settingsService';
+import { useThemeStore } from '@/stores/themeStore';
 import { activitiesCollection, database, sessionsCollection } from '@/database';
 import { seedDefaultCategoriesIfNeeded } from '@/database/seed';
 import { useQueryCount } from '@/hooks/useQuery';
@@ -24,7 +27,16 @@ import {
  * หน้าตั้งค่า — แจ้งเตือนรายวัน (local ล้วน), ข้อมูลความเป็นส่วนตัว,
  * จำนวนข้อมูล และการลบข้อมูลทั้งหมด
  */
+const THEME_OPTIONS = [
+  { value: 'light' as const, label: STR.settings.themeLight },
+  { value: 'dark' as const, label: STR.settings.themeDark },
+  { value: 'system' as const, label: STR.settings.themeSystem },
+];
+
 export default function SettingsScreen() {
+  const c = useColors();
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeModeState = useThemeStore((s) => s.setMode);
   const [enabled, setEnabled] = useState(false);
   const [hour, setHour] = useState(20);
   const [minute, setMinute] = useState(0);
@@ -102,6 +114,16 @@ export default function SettingsScreen() {
     <Screen>
       <SubHeader title={STR.settings.title} />
       <ScrollView contentContainerClassName="px-5 pb-10">
+        {/* ธีม (สว่าง/มืด/อัตโนมัติ) */}
+        <View className="mb-4 rounded-2xl border border-stroke bg-surface p-4">
+          <Text className="mb-3 text-base font-semibold text-ink">{STR.settings.theme}</Text>
+          <Segmented
+            options={THEME_OPTIONS}
+            value={themeMode}
+            onChange={(m: ThemeMode) => setThemeModeState(m)}
+          />
+        </View>
+
         {/* การแจ้งเตือน */}
         <View className="rounded-2xl border border-stroke bg-surface p-4">
           <View className="flex-row items-center justify-between">
@@ -109,8 +131,8 @@ export default function SettingsScreen() {
             <Switch
               value={enabled}
               onValueChange={toggleReminder}
-              trackColor={{ true: THEME.primarySoft, false: THEME.stroke }}
-              thumbColor={enabled ? THEME.primary : THEME.muted}
+              trackColor={{ true: c.primarySoft, false: c.stroke }}
+              thumbColor={enabled ? c.primary : c.muted}
             />
           </View>
 
@@ -133,7 +155,7 @@ export default function SettingsScreen() {
         {/* ความเป็นส่วนตัว */}
         <View className="mt-4 rounded-2xl border border-stroke bg-surface p-4">
           <View className="flex-row items-center">
-            <Ionicons name="lock-closed" size={16} color={THEME.success} />
+            <Ionicons name="lock-closed" size={16} color={c.success} />
             <Text className="ml-2 text-base font-semibold text-ink">
               {STR.settings.privacyTitle}
             </Text>
@@ -177,14 +199,15 @@ function Stepper({
   onDec: () => void;
   onInc: () => void;
 }) {
+  const c = useColors();
   return (
     <View className="flex-row items-center rounded-xl border border-stroke bg-surface2">
       <Pressable onPress={onDec} hitSlop={6} className="px-3 py-2">
-        <Ionicons name="remove" size={16} color={THEME.muted} />
+        <Ionicons name="remove" size={16} color={c.muted} />
       </Pressable>
       <Text className="w-8 text-center text-lg font-bold text-ink">{children}</Text>
       <Pressable onPress={onInc} hitSlop={6} className="px-3 py-2">
-        <Ionicons name="add" size={16} color={THEME.muted} />
+        <Ionicons name="add" size={16} color={c.muted} />
       </Pressable>
     </View>
   );

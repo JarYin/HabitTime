@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, TextInput, View } from 'react-native';
 
 import ActivityCard from '@/components/ActivityCard';
 import CategoryPills from '@/components/CategoryPills';
 import EmptyState from '@/components/EmptyState';
+import ScreenHeader from '@/components/ui/ScreenHeader';
 import Screen from '@/components/ui/Screen';
-import { THEME } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
 import { activeActivitiesQuery, filterActivitiesByName } from '@/services/activityService';
@@ -15,22 +16,19 @@ import { categoriesQuery } from '@/services/categoryService';
 import { historyQuery } from '@/services/sessionService';
 import { totalsByActivity } from '@/services/statsService';
 
-/**
- * หน้าจัดการกิจกรรม — ตามเอกสาร SRS 2.1.2(2):
- * ดูกิจกรรมทั้งหมด + เวลาสะสม, ค้นหา, กรองตามหมวดหมู่, เพิ่ม/เริ่มจับเวลา
- */
+/** หน้าจัดการกิจกรรมทั้งหมด — เข้าจาก "ดูทั้งหมด" บนหน้าแรก */
 export default function ActivitiesScreen() {
+  const c = useColors();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const activities = useQueryList(() => activeActivitiesQuery(), []);
   const categories = useQueryList(() => categoriesQuery(), []);
-  // ดึงทุกเซสชันเพื่อรวม "เวลาสะสม" ต่อกิจกรรม (ข้อมูลผู้ใช้เดียว ปริมาณหลักพันแถว)
   const allSessions = useQueryList(() => historyQuery(), []);
 
   const totalByActivity = useMemo(() => totalsByActivity(allSessions), [allSessions]);
-  const categoryLabelById = useMemo(
-    () => new Map(categories.map((c) => [c.id, `${c.emoji} ${c.name}`])),
+  const categoryNameById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c.name])),
     [categories],
   );
 
@@ -42,24 +40,30 @@ export default function ActivitiesScreen() {
   }, [activities, categoryId, search]);
 
   return (
-    <Screen noBottomInset>
-      <View className="px-5 pt-4">
-        <Text className="text-xl font-bold text-ink">{STR.activities.title}</Text>
-
-        {/* ค้นหากิจกรรม (ในหน่วยความจำ เพราะชื่อถูกเข้ารหัสใน DB) */}
-        <View className="mt-3 flex-row items-center rounded-xl border border-stroke bg-surface px-3">
-          <Ionicons name="search" size={18} color={THEME.muted} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={STR.activities.searchPlaceholder}
-            placeholderTextColor={THEME.muted}
-            className="ml-2 flex-1 py-3 text-base text-ink"
-          />
-        </View>
+    <Screen>
+      <View className="flex-row items-center px-2 pt-2">
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={8}
+          className="h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
+        >
+          <Ionicons name="chevron-back" size={24} color={c.ink} />
+        </Pressable>
+        <ScreenHeader title={STR.activities.title} className="flex-1 px-1" />
       </View>
 
-      <View className="mt-3">
+      <View className="mt-4 flex-row items-center rounded-2xl bg-surface mx-5 px-3" style={cardShadow}>
+        <Ionicons name="search" size={18} color={c.muted} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder={STR.activities.searchPlaceholder}
+          placeholderTextColor={c.subtle}
+          className="ml-2 flex-1 py-2.5 text-base text-ink"
+        />
+      </View>
+
+      <View className="mt-4">
         <CategoryPills categories={categories} selectedId={categoryId} onSelect={setCategoryId} />
       </View>
 
@@ -67,13 +71,13 @@ export default function ActivitiesScreen() {
         data={visible}
         keyExtractor={(a) => a.id}
         contentContainerClassName="px-5 pb-28 pt-3"
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={<EmptyState emoji="🔎" message={STR.activities.empty} />}
         renderItem={({ item }) => (
           <ActivityCard
             activity={item}
-            categoryLabel={categoryLabelById.get(item.categoryId)}
+            categoryLabel={categoryNameById.get(item.categoryId)}
             totalSec={totalByActivity.get(item.id) ?? 0}
-            totalLabel={STR.activities.totalTime}
             onPress={() => router.push(`/activity/${item.id}`)}
             onStartTimer={() => router.push(`/timer/${item.id}`)}
           />
@@ -82,10 +86,27 @@ export default function ActivitiesScreen() {
 
       <Pressable
         onPress={() => router.push('/activity/new')}
-        className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-80"
+        className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary active:opacity-85"
+        style={primaryShadow}
       >
-        <Ionicons name="add" size={30} color={THEME.background} />
+        <Ionicons name="add" size={30} color="#FFFFFF" />
       </Pressable>
     </Screen>
   );
 }
+
+const cardShadow = {
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 1,
+} as const;
+
+const primaryShadow = {
+  shadowColor: '#0F2EF5',
+  shadowOpacity: 0.3,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 6,
+} as const;

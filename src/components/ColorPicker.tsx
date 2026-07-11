@@ -1,27 +1,36 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 
-import { ACTIVITY_COLORS, THEME } from '@/constants/palette';
+import { ACTIVITY_COLORS } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 
 interface ColorPickerProps {
   value: string;
   onChange: (color: string) => void;
 }
 
-/** แถวเลือกสีของกิจกรรม (use case "เลือกสี") */
+/** แถวเลือกสีของกิจกรรม (use case "เลือกสี") — วงกลมสี มีเช็คเมื่อเลือก */
 export default function ColorPicker({ value, onChange }: ColorPickerProps) {
+  const c = useColors();
   return (
     <View className="flex-row flex-wrap gap-3">
-      {ACTIVITY_COLORS.map((color) => (
-        <Pressable
-          key={color}
-          onPress={() => onChange(color)}
-          className="h-10 w-10 items-center justify-center rounded-full"
-          style={{ backgroundColor: color }}
-        >
-          {value === color && <Ionicons name="checkmark" size={20} color={THEME.background} />}
-        </Pressable>
-      ))}
+      {ACTIVITY_COLORS.map((color) => {
+        const selected = value === color;
+        return (
+          <Pressable
+            key={color}
+            onPress={() => onChange(color)}
+            className="h-11 w-11 items-center justify-center rounded-full"
+            style={{
+              backgroundColor: color,
+              borderWidth: selected ? 3 : 0,
+              borderColor: c.primaryDeep,
+            }}
+          >
+            {selected && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

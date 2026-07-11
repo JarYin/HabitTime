@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import CategoryPills from '@/components/CategoryPills';
 import ColorPicker from '@/components/ColorPicker';
 import EmojiPicker from '@/components/EmojiPicker';
-import { ACTIVITY_COLORS, ACTIVITY_EMOJIS, THEME } from '@/constants/palette';
+import IconTile from '@/components/ui/IconTile';
+import PrimaryButton from '@/components/ui/PrimaryButton';
+import { ACTIVITY_COLORS, ACTIVITY_EMOJIS } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import type { Category } from '@/database/models';
 import type { ActivityInput } from '@/services/activityService';
@@ -14,13 +16,22 @@ interface ActivityFormProps {
   initial?: Partial<ActivityInput>;
   submitLabel: string;
   onSubmit: (input: ActivityInput) => void;
+  /** ปุ่มยกเลิก (หน้าแก้ไข) — ถ้ามีจะแสดงคู่กับปุ่มบันทึก */
+  onCancel?: () => void;
 }
 
 /**
- * ฟอร์มเพิ่ม/แก้ไขกิจกรรม — field ตาม use case ในเอกสาร SRS:
- * ใส่ชื่อกิจกรรม → เลือกหมวดหมู่ → เลือกอิโมจิ → เลือกสี → บันทึกกิจกรรม
+ * ฟอร์มเพิ่ม/แก้ไขกิจกรรม (ดีไซน์ตาม Figma "add/edit activity")
+ * พรีวิวไอคอน → ชื่อ → หมวดหมู่ → สี → สัญลักษณ์ → บันทึก
  */
-export default function ActivityForm({ categories, initial, submitLabel, onSubmit }: ActivityFormProps) {
+export default function ActivityForm({
+  categories,
+  initial,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: ActivityFormProps) {
+  const c = useColors();
   const [name, setName] = useState(initial?.name ?? '');
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? '');
   const [emoji, setEmoji] = useState(initial?.emoji ?? ACTIVITY_EMOJIS[0]);
@@ -36,60 +47,95 @@ export default function ActivityForm({ categories, initial, submitLabel, onSubmi
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerClassName="pb-10">
-      <View className="px-5">
-        <Text className="mb-2 mt-4 text-sm font-medium text-muted">{STR.form.name}</Text>
-        <TextInput
-          value={name}
-          onChangeText={(v) => {
-            setName(v);
-            if (error) setError('');
-          }}
-          placeholder={STR.form.namePlaceholder}
-          placeholderTextColor={THEME.muted}
-          className="rounded-xl border border-stroke bg-surface px-4 py-3 text-base text-ink"
-          maxLength={60}
-        />
-        {!!error && <Text className="mt-2 text-sm text-danger">{error}</Text>}
-
-        <Text className="mb-2 mt-6 text-sm font-medium text-muted">{STR.form.category}</Text>
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="px-5 pb-10"
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* พรีวิวไอคอน */}
+      <View className="mt-1 items-center">
+        <IconTile emoji={emoji} color={color} size={64} className="rounded-2xl" />
       </View>
 
-      {/* ฟอร์มเลือกหมวดหมู่ ใช้ pills เดียวกับหน้ากรอง แต่ไม่มีตัวเลือก "ทั้งหมด" */}
-      <View className="-mx-0">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 px-5">
-          {categories.map((cat) => (
+      {/* ชื่อกิจกรรม */}
+      <Text className="mb-2 mt-6 text-sm font-semibold text-muted">{STR.form.name}</Text>
+      <TextInput
+        value={name}
+        onChangeText={(v) => {
+          setName(v);
+          if (error) setError('');
+        }}
+        placeholder={STR.form.namePlaceholder}
+        placeholderTextColor={c.subtle}
+        className="rounded-2xl bg-surface px-4 py-3.5 text-base text-ink"
+        maxLength={60}
+      />
+      {!!error && <Text className="mt-2 text-sm text-danger">{error}</Text>}
+
+      {/* หมวดหมู่ */}
+      <Text className="mb-2 mt-6 text-sm font-semibold text-muted">{STR.form.category}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {categories.map((cat) => {
+          const active = categoryId === cat.id;
+          return (
             <Pressable
               key={cat.id}
               onPress={() => setCategoryId(cat.id)}
-              className={`rounded-full border px-4 py-2 ${
-                categoryId === cat.id ? 'border-primary bg-primarySoft' : 'border-stroke bg-surface'
-              }`}
+              className="rounded-full px-4 py-2"
+              style={{
+                backgroundColor: active ? c.primarySoft : c.surface,
+                borderWidth: 1,
+                borderColor: active ? c.primaryDeep : 'transparent',
+              }}
             >
               <Text
-                className={`text-sm ${categoryId === cat.id ? 'font-semibold text-primary' : 'text-muted'}`}
+                className="text-sm"
+                style={{
+                  color: active ? c.primaryDeep : c.muted,
+                  fontWeight: active ? '700' : '500',
+                }}
               >
-                {cat.emoji} {cat.name}
+                {cat.name}
               </Text>
             </Pressable>
-          ))}
-        </ScrollView>
+          );
+        })}
       </View>
 
-      <View className="px-5">
-        <Text className="mb-2 mt-6 text-sm font-medium text-muted">{STR.form.emoji}</Text>
-        <EmojiPicker value={emoji} onChange={setEmoji} />
+      {/* สี */}
+      <Text className="mb-3 mt-6 text-sm font-semibold text-muted">{STR.form.color}</Text>
+      <ColorPicker value={color} onChange={setColor} />
 
-        <Text className="mb-2 mt-6 text-sm font-medium text-muted">{STR.form.color}</Text>
-        <ColorPicker value={color} onChange={setColor} />
+      {/* สัญลักษณ์ */}
+      <Text className="mb-3 mt-6 text-sm font-semibold text-muted">{STR.form.emoji}</Text>
+      <EmojiPicker value={emoji} onChange={setEmoji} />
 
-        <Pressable
+      {/* ปุ่ม */}
+      {onCancel ? (
+        <View className="mt-8 flex-row gap-3">
+          <PrimaryButton
+            label={STR.detail.cancel}
+            onPress={onCancel}
+            variant="danger"
+            icon="close"
+            className="flex-1"
+          />
+          <PrimaryButton
+            label={STR.form.saveEdit}
+            onPress={handleSubmit}
+            icon="checkmark"
+            className="flex-1"
+          />
+        </View>
+      ) : (
+        <PrimaryButton
+          label={submitLabel}
           onPress={handleSubmit}
-          className="mt-8 items-center rounded-2xl bg-primary py-4 active:opacity-80"
-        >
-          <Text className="text-base font-bold text-background">{submitLabel}</Text>
-        </Pressable>
-      </View>
+          icon="checkmark"
+          className="mt-8"
+        />
+      )}
     </ScrollView>
   );
 }

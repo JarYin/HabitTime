@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { THEME } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 import type { DayTotal } from '@/services/statsService';
 
 interface WeekBarsProps {
@@ -8,33 +8,35 @@ interface WeekBarsProps {
 }
 
 const THAI_WEEKDAY = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-const MAX_BAR_HEIGHT = 64;
+const MAX_BAR_HEIGHT = 90;
 
 /**
- * กราฟแท่งจิ๋ว 7 วันบน Dashboard — series เดียวจึงใช้สีเดียว (primary)
- * วันนี้เน้นเต็มสี วันอื่นจาง แท่งปลายมนตั้งบน baseline ตามสเปก dataviz
+ * กราฟแท่ง 7 วัน (สไตล์ Figma) — แท่งน้ำเงินปลายมน วันนี้เน้นเต็มสี วันอื่นจาง
  */
 export default function WeekBars({ data }: WeekBarsProps) {
+  const c = useColors();
   const maxSec = Math.max(...data.map((d) => d.totalSec), 1);
   const todayIndex = data.length - 1;
 
   return (
-    <View className="flex-row items-end justify-between">
+    <View className="flex-row items-end justify-between" style={{ height: MAX_BAR_HEIGHT + 22 }}>
       {data.map((day, i) => {
-        const h = day.totalSec > 0 ? Math.max(6, (day.totalSec / maxSec) * MAX_BAR_HEIGHT) : 3;
+        const h = day.totalSec > 0 ? Math.max(8, (day.totalSec / maxSec) * MAX_BAR_HEIGHT) : 4;
+        const isToday = i === todayIndex;
         return (
-          <View key={day.dayKey} className="flex-1 items-center">
+          <View key={day.dayKey} className="flex-1 items-center justify-end">
             <View
               style={{
                 height: h,
                 width: 14,
-                borderRadius: 4,
-                backgroundColor: day.totalSec > 0 ? THEME.primary : THEME.stroke,
-                opacity: day.totalSec === 0 ? 1 : i === todayIndex ? 1 : 0.55,
+                borderRadius: 7,
+                backgroundColor: day.totalSec > 0 ? c.primary : c.track,
+                opacity: day.totalSec === 0 ? 0.5 : isToday ? 1 : 0.5,
               }}
             />
             <Text
-              className={`mt-2 text-[11px] ${i === todayIndex ? 'font-bold text-ink' : 'text-muted'}`}
+              className="mt-2 text-[11px]"
+              style={{ color: isToday ? c.ink : c.subtle, fontWeight: isToday ? '700' : '400' }}
             >
               {THAI_WEEKDAY[day.date.getDay()]}
             </Text>

@@ -1,78 +1,83 @@
-import { useRef, useState } from 'react';
-import { FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { Text, View } from 'react-native';
 
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { setOnboardingDone } from '@/services/settingsService';
 import { useAppStore } from '@/stores/appStore';
 
+const FEATURE_ICONS: (keyof typeof Ionicons.glyphMap)[] = ['locate', 'stopwatch', 'bar-chart'];
+
 /**
- * หน้าต้อนรับ (Welcome Page ตามเอกสาร SRS) — แนะนำแอป จุดเด่น และนโยบายความเป็นส่วนตัว
- * เวอร์ชัน local-first ไม่มีสมัครสมาชิก/ล็อกอิน: จบ onboarding แล้วเข้าใช้ได้เลย
+ * หน้าเริ่มต้นใช้งาน (Landing) — โลโก้แอป + จุดเด่น 3 อย่าง + ปุ่มเข้าใช้งาน/เข้าสู่ระบบ
+ * ดีไซน์ตาม Figma "landing page"
  */
-export default function OnboardingScreen() {
-  const { width } = useWindowDimensions();
-  const listRef = useRef<FlatList>(null);
-  const [page, setPage] = useState(0);
+export default function LandingScreen() {
+  const c = useColors();
   const setOnboarded = useAppStore((s) => s.setOnboarded);
 
-  const slides = STR.onboarding.slides;
-  const isLast = page === slides.length - 1;
-
-  const finish = async () => {
+  const start = async () => {
     await setOnboardingDone();
-    setOnboarded(true); // Stack.Protected พาไป (tabs) อัตโนมัติ
-  };
-
-  const next = () => {
-    if (isLast) {
-      void finish();
-    } else {
-      listRef.current?.scrollToIndex({ index: page + 1, animated: true });
-    }
+    setOnboarded(true); // Stack.Protected พาเข้า (tabs) อัตโนมัติ
   };
 
   return (
-    <Screen>
-      <View className="items-center pt-6">
-        <Text className="text-2xl font-extrabold text-primary">{STR.appName}</Text>
-        <Text className="mt-1 text-sm text-muted">{STR.tagline}</Text>
-      </View>
+    <Screen className="px-8">
+      <View className="flex-1 items-center justify-center">
+        {/* โลโก้ */}
+        <View
+          className="h-24 w-24 items-center justify-center rounded-3xl bg-primary"
+          style={{
+            shadowColor: c.primary,
+            shadowOpacity: 0.35,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 8,
+          }}
+        >
+          <Ionicons name="timer-outline" size={44} color="#FFFFFF" />
+        </View>
+        <Text className="mt-5 text-3xl font-extrabold text-ink">{STR.appName}</Text>
+        <Text className="mt-2 text-sm text-muted">{STR.landing.tagline}</Text>
 
-      <FlatList
-        ref={listRef}
-        data={slides}
-        keyExtractor={(item) => item.title}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
-        renderItem={({ item }) => (
-          <View style={{ width }} className="items-center justify-center px-10">
-            <Text className="text-7xl">{item.emoji}</Text>
-            <Text className="mt-8 text-center text-2xl font-bold text-ink">{item.title}</Text>
-            <Text className="mt-4 text-center text-base leading-7 text-muted">{item.body}</Text>
-          </View>
-        )}
-      />
-
-      <View className="px-8 pb-6">
-        <View className="mb-6 flex-row justify-center gap-2">
-          {slides.map((s, i) => (
+        {/* จุดเด่น 3 อย่าง */}
+        <View className="mt-10 w-full flex-row justify-between">
+          {STR.landing.features.map((feat, i) => (
             <View
-              key={s.title}
-              className={`h-2 rounded-full ${i === page ? 'w-6 bg-primary' : 'w-2 bg-stroke'}`}
-            />
+              key={feat.label}
+              className="mx-1.5 flex-1 items-center rounded-2xl bg-surface py-5"
+              style={{
+                shadowColor: '#000',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 1,
+              }}
+            >
+              <View
+                className="h-11 w-11 items-center justify-center rounded-full"
+                style={{ backgroundColor: 'rgba(15,46,245,0.12)' }}
+              >
+                <Ionicons name={FEATURE_ICONS[i]} size={22} color={c.primary} />
+              </View>
+              <Text className="mt-3 text-xs font-semibold text-ink">{feat.label}</Text>
+            </View>
           ))}
         </View>
-        <Pressable
-          onPress={next}
-          className="items-center rounded-2xl bg-primary py-4 active:opacity-80"
-        >
-          <Text className="text-base font-bold text-background">
-            {isLast ? STR.onboarding.start : STR.onboarding.next}
-          </Text>
-        </Pressable>
+      </View>
+
+      {/* ปุ่ม */}
+      <View className="pb-6">
+        <PrimaryButton label={STR.landing.start} onPress={() => void start()} />
+        <PrimaryButton
+          label={STR.landing.haveAccount}
+          onPress={() => router.push('/login' as never)}
+          variant="outline"
+          className="mt-3"
+        />
       </View>
     </Screen>
   );

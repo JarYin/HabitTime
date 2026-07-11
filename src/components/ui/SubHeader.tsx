@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { THEME } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 
 interface SubHeaderProps {
   title: string;
@@ -12,6 +12,7 @@ interface SubHeaderProps {
 
 /** แถบหัวหน้าจอรอง: ปุ่มย้อนกลับ + ชื่อหน้า */
 export default function SubHeader({ title, right }: SubHeaderProps) {
+  const c = useColors();
   return (
     <View className="flex-row items-center justify-between px-4 py-3">
       <View className="flex-row items-center">
@@ -20,7 +21,7 @@ export default function SubHeader({ title, right }: SubHeaderProps) {
           hitSlop={8}
           className="mr-2 h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
         >
-          <Ionicons name="chevron-back" size={24} color={THEME.ink} />
+          <Ionicons name="chevron-back" size={24} color={c.ink} />
         </Pressable>
         <Text className="text-lg font-bold text-ink">{title}</Text>
       </View>

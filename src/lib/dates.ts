@@ -89,6 +89,14 @@ export function formatDuration(totalSec: number): string {
   return `${s} วิ`;
 }
 
+/** คำทักทายตามช่วงเวลาของวัน (เช้า/บ่าย/เย็น) */
+export function greetingKey(date: Date = new Date()): 'morning' | 'afternoon' | 'evening' {
+  const h = date.getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
+}
+
 /** รูปแบบนาฬิกาจับเวลา HH:MM:SS */
 export function formatStopwatch(totalSec: number): string {
   const sec = Math.max(0, Math.floor(totalSec));

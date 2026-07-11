@@ -1,24 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import SessionRow from '@/components/SessionRow';
+import IconTile from '@/components/ui/IconTile';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
 import SubHeader from '@/components/ui/SubHeader';
-import { THEME } from '@/constants/palette';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { activitiesCollection } from '@/database';
 import { useQueryList, useRecord } from '@/hooks/useQuery';
 import { formatDuration } from '@/lib/dates';
-import { deleteActivity } from '@/services/activityService';
 import { activitySessionsQuery, allActivitySessionsQuery } from '@/services/sessionService';
 
-/**
- * หน้ารายละเอียดกิจกรรม — use cases: ดูรายละเอียดกิจกรรม, ดูเวลาสะสม,
- * แก้ไขกิจกรรม, ลบกิจกรรม (พร้อมยืนยัน), เริ่มจับเวลา
- */
+/** หน้ารายละเอียดกิจกรรม — เวลาสะสม, จำนวนครั้ง, เริ่มจับเวลา, ประวัติล่าสุด */
 export default function ActivityDetailScreen() {
+  const c = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const activity = useRecord(activitiesCollection, id);
   const recentSessions = useQueryList(() => activitySessionsQuery(id, 20), [id]);
@@ -29,84 +28,53 @@ export default function ActivityDetailScreen() {
     [allSessions],
   );
 
-  // record ถูกลบ/ไม่พบ → กลับหน้าเดิม
   useEffect(() => {
     if (activity === null) router.back();
   }, [activity]);
 
   if (!activity) return <Screen />;
 
-  const confirmDelete = () => {
-    Alert.alert(STR.detail.deleteTitle, STR.detail.deleteMessage, [
-      { text: STR.detail.cancel, style: 'cancel' },
-      {
-        text: STR.detail.deleteConfirm,
-        style: 'destructive',
-        onPress: () => void deleteActivity(activity),
-      },
-    ]);
-  };
-
   return (
     <Screen>
       <SubHeader
         title=""
         right={
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => router.push(`/activity/${activity.id}/edit`)}
-              hitSlop={8}
-              className="h-10 w-10 items-center justify-center rounded-full bg-surface active:bg-surface2"
-            >
-              <Ionicons name="pencil" size={18} color={THEME.muted} />
-            </Pressable>
-            <Pressable
-              onPress={confirmDelete}
-              hitSlop={8}
-              className="h-10 w-10 items-center justify-center rounded-full bg-surface active:bg-surface2"
-            >
-              <Ionicons name="trash-outline" size={18} color={THEME.danger} />
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => router.push(`/activity/${activity.id}/edit`)}
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full active:bg-surface2"
+          >
+            <Ionicons name="create-outline" size={20} color={c.primary} />
+          </Pressable>
         }
       />
 
-      <ScrollView contentContainerClassName="pb-10">
-        {/* ข้อมูลกิจกรรม */}
+      <ScrollView contentContainerClassName="pb-10" showsVerticalScrollIndicator={false}>
         <View className="items-center px-5">
-          <View
-            className="h-20 w-20 items-center justify-center rounded-3xl"
-            style={{ backgroundColor: `${activity.color}26` }}
-          >
-            <Text className="text-4xl">{activity.emoji}</Text>
-          </View>
-          <Text className="mt-3 text-center text-2xl font-bold text-ink">{activity.name}</Text>
+          <IconTile emoji={activity.emoji} color={activity.color} size={80} className="rounded-3xl" />
+          <Text className="mt-3 text-center text-2xl font-extrabold text-ink">{activity.name}</Text>
         </View>
 
-        {/* เวลาสะสม + จำนวนครั้ง */}
         <View className="mx-5 mt-5 flex-row gap-3">
-          <View className="flex-1 rounded-2xl border border-stroke bg-surface p-4">
+          <View className="flex-1 rounded-2xl bg-surface p-4" style={cardShadow}>
             <Text className="text-xs text-muted">{STR.detail.totalTime}</Text>
-            <Text className="mt-1 text-xl font-bold text-ink">{formatDuration(totalSec)}</Text>
+            <Text className="mt-1 text-xl font-extrabold text-ink">{formatDuration(totalSec)}</Text>
           </View>
-          <View className="flex-1 rounded-2xl border border-stroke bg-surface p-4">
+          <View className="flex-1 rounded-2xl bg-surface p-4" style={cardShadow}>
             <Text className="text-xs text-muted">{STR.detail.sessionCount}</Text>
-            <Text className="mt-1 text-xl font-bold text-ink">{allSessions.length}</Text>
+            <Text className="mt-1 text-xl font-extrabold text-ink">{allSessions.length}</Text>
           </View>
         </View>
 
-        {/* เริ่มจับเวลา */}
-        <Pressable
-          onPress={() => router.push(`/timer/${activity.id}`)}
-          className="mx-5 mt-5 flex-row items-center justify-center rounded-2xl py-4 active:opacity-80"
-          style={{ backgroundColor: activity.color }}
-        >
-          <Ionicons name="play" size={20} color={THEME.background} />
-          <Text className="ml-2 text-base font-bold text-background">{STR.detail.startTimer}</Text>
-        </Pressable>
+        <View className="mx-5 mt-5">
+          <PrimaryButton
+            label={STR.detail.startTimer}
+            icon="play"
+            onPress={() => router.push(`/timer/${activity.id}`)}
+          />
+        </View>
 
-        {/* ประวัติล่าสุดของกิจกรรมนี้ */}
-        <Text className="mb-3 mt-7 px-5 text-lg font-bold text-ink">
+        <Text className="mb-3 mt-7 px-5 text-base font-extrabold text-ink">
           {STR.detail.recentSessions}
         </Text>
         <View className="px-5">
@@ -121,3 +89,11 @@ export default function ActivityDetailScreen() {
     </Screen>
   );
 }
+
+const cardShadow = {
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 1,
+} as const;

@@ -6,7 +6,7 @@
  * เพื่อให้สถิติอัปเดตอัตโนมัติเมื่อข้อมูลเปลี่ยน (reactive) และทดสอบง่าย
  */
 import type { Activity, TimeSession } from '@/database/models';
-import { addDays, dayKeysBetween, startOfDay, startOfMonth, startOfWeek } from '@/lib/dates';
+import { addDays, dayKeysBetween, startOfDay, startOfMonth, startOfWeek, toDayKey } from '@/lib/dates';
 
 export type StatsPeriod = 'daily' | 'weekly' | 'monthly';
 
@@ -91,6 +91,23 @@ export function aggregateDailyTotals(
     date: addDays(from, i),
     totalSec: perDay.get(dayKey) ?? 0,
   }));
+}
+
+/**
+ * จำนวนวันที่ทำกิจกรรมต่อเนื่องจนถึงปัจจุบัน (streak)
+ * นับถอยหลังจากวันนี้ (หรือเริ่มจากเมื่อวานถ้าวันนี้ยังไม่มี) จนเจอวันที่ว่าง
+ */
+export function currentStreak(sessions: TimeSession[], now: Date = new Date()): number {
+  const activeDays = new Set(sessions.map((s) => s.dayKey));
+  let streak = 0;
+  let cursor = startOfDay(now);
+  // ถ้าวันนี้ยังไม่มีกิจกรรม ให้เริ่มนับจากเมื่อวาน (ยังถือว่า streak ไม่ขาด)
+  if (!activeDays.has(toDayKey(cursor))) cursor = addDays(cursor, -1);
+  while (activeDays.has(toDayKey(cursor))) {
+    streak += 1;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
 }
 
 /** รวมเวลาต่อกิจกรรม (ใช้ทำ "เวลาสะสม" ในลิสต์กิจกรรม) */

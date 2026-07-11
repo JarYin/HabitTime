@@ -1,68 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { SectionList, Text, TextInput, View } from 'react-native';
+import { Pressable, SectionList, Text, TextInput, View } from 'react-native';
 
 import CategoryPills from '@/components/CategoryPills';
 import EmptyState from '@/components/EmptyState';
-import SessionRow from '@/components/SessionRow';
-import Segmented from '@/components/ui/Segmented';
+import ScreenHeader from '@/components/ui/ScreenHeader';
 import Screen from '@/components/ui/Screen';
-import { THEME } from '@/constants/palette';
+import SessionRow from '@/components/SessionRow';
+import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
-import {
-  addDays,
-  formatDuration,
-  formatThaiFullDate,
-  toDayKey,
-} from '@/lib/dates';
+import { addDays, formatDuration, formatThaiDate, toDayKey } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
 import { categoriesQuery } from '@/services/categoryService';
 import { historyQuery } from '@/services/sessionService';
 import type { TimeSession } from '@/database/models';
 
-type RangeKey = 'week' | 'month' | 'all';
-
-const RANGE_OPTIONS = [
-  { value: 'week' as const, label: STR.history.ranges.week },
-  { value: 'month' as const, label: STR.history.ranges.month },
-  { value: 'all' as const, label: STR.history.ranges.all },
-];
-
-function rangeFromDayKey(range: RangeKey): string | null {
-  if (range === 'all') return null;
-  const days = range === 'week' ? 7 : 30;
-  return toDayKey(addDays(new Date(), -(days - 1)));
-}
-
 /**
- * หน้าประวัติ — ตามเอกสาร SRS 2.1.2(3):
- * แสดงประวัติทั้งหมด, ค้นหา, กรองตามหมวดหมู่, กรองช่วงวันที่,
- * แสดงเวลาสะสมและวันที่ทำกิจกรรมของแต่ละรายการ
+ * หน้าประวัติ (ดีไซน์ Figma "history page") — ประวัติทั้งหมดจัดกลุ่มตามวัน,
+ * ค้นหาจากชื่อกิจกรรม, กรองตามหมวดหมู่
  */
 export default function HistoryScreen() {
-  const [range, setRange] = useState<RangeKey>('week');
+  const c = useColors();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const fromDayKey = rangeFromDayKey(range);
-  const sessions = useQueryList(
-    () => historyQuery({ fromDayKey, categoryId }),
-    [fromDayKey, categoryId],
-  );
+  const sessions = useQueryList(() => historyQuery({ categoryId }), [categoryId]);
   const activities = useQueryList(() => activeActivitiesQuery(), []);
   const categories = useQueryList(() => categoriesQuery(), []);
 
   const activityById = useMemo(() => new Map(activities.map((a) => [a.id, a])), [activities]);
+  const categoryNameById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c.name])),
+    [categories],
+  );
 
-  // ค้นหาจากชื่อกิจกรรม (ถอดรหัสแล้ว) ในหน่วยความจำ
   const visibleSessions = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return sessions;
     return sessions.filter((s) => activityById.get(s.activityId)?.name.toLowerCase().includes(q));
   }, [sessions, search, activityById]);
 
-  // จัดกลุ่มตามวัน (sessions เรียงใหม่→เก่าอยู่แล้ว)
   const sections = useMemo(() => {
     const byDay = new Map<string, TimeSession[]>();
     for (const s of visibleSessions) {
@@ -72,59 +51,88 @@ export default function HistoryScreen() {
     }
     const todayKey = toDayKey(new Date());
     const yesterdayKey = toDayKey(addDays(new Date(), -1));
-    return [...byDay.entries()].map(([dayKey, list]) => ({
-      title:
+    return [...byDay.entries()].map(([dayKey, list]) => {
+      const prefix =
         dayKey === todayKey
           ? STR.common.today
           : dayKey === yesterdayKey
             ? STR.common.yesterday
-            : formatThaiFullDate(list[0].endedAt),
-      totalSec: list.reduce((sum, s) => sum + s.durationSec, 0),
-      data: list,
-    }));
+            : '';
+      return {
+        title: `${prefix ? `${prefix} ` : ''}${formatThaiDate(list[0].endedAt)}`,
+        totalSec: list.reduce((sum, s) => sum + s.durationSec, 0),
+        data: list,
+      };
+    });
   }, [visibleSessions]);
 
   return (
     <Screen noBottomInset>
-      <View className="px-5 pt-4">
-        <Text className="text-xl font-bold text-ink">{STR.history.title}</Text>
+      <ScreenHeader
+        title={STR.tabs.history}
+        className="pt-3"
+        right={
+          <Pressable
+            onPress={() => setSearchOpen((v) => !v)}
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
+            style={cardShadow}
+          >
+            <Ionicons name="search" size={18} color={c.ink} />
+          </Pressable>
+        }
+      />
 
-        <View className="mt-3">
-          <Segmented options={RANGE_OPTIONS} value={range} onChange={setRange} />
-        </View>
-
-        <View className="mt-3 flex-row items-center rounded-xl border border-stroke bg-surface px-3">
-          <Ionicons name="search" size={18} color={THEME.muted} />
+      {searchOpen && (
+        <View className="mx-5 mt-3 flex-row items-center rounded-2xl bg-surface px-3" style={cardShadow}>
+          <Ionicons name="search" size={18} color={c.muted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={STR.history.searchPlaceholder}
-            placeholderTextColor={THEME.muted}
-            className="ml-2 flex-1 py-3 text-base text-ink"
+            placeholderTextColor={c.subtle}
+            autoFocus
+            className="ml-2 flex-1 py-2.5 text-base text-ink"
           />
         </View>
-      </View>
+      )}
 
-      <View className="mt-3">
+      <View className="mt-4">
         <CategoryPills categories={categories} selectedId={categoryId} onSelect={setCategoryId} />
       </View>
 
       <SectionList
         sections={sections}
         keyExtractor={(s) => s.id}
-        contentContainerClassName="px-5 pb-10 pt-3"
+        contentContainerClassName="px-5 pb-10 pt-2"
         stickySectionHeadersEnabled={false}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={<EmptyState emoji="🗓️" message={STR.history.empty} />}
         renderSectionHeader={({ section }) => (
           <View className="mb-2 mt-4 flex-row items-center justify-between">
-            <Text className="text-sm font-semibold text-ink">{section.title}</Text>
-            <Text className="text-xs text-muted">{formatDuration(section.totalSec)}</Text>
+            <Text className="text-sm font-bold text-ink">{section.title}</Text>
+            <Text className="text-xs font-medium text-muted">{formatDuration(section.totalSec)}</Text>
           </View>
         )}
-        renderItem={({ item }) => (
-          <SessionRow session={item} activity={activityById.get(item.activityId)} />
-        )}
+        renderItem={({ item }) => {
+          const activity = activityById.get(item.activityId);
+          return (
+            <SessionRow
+              session={item}
+              activity={activity}
+              subtitle={activity ? categoryNameById.get(activity.categoryId) : undefined}
+            />
+          );
+        }}
       />
     </Screen>
   );
 }
+
+const cardShadow = {
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 1,
+} as const;

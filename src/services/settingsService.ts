@@ -10,7 +10,19 @@ const KEYS = {
   reminderEnabled: 'reminder_enabled',
   reminderHour: 'reminder_hour',
   reminderMinute: 'reminder_minute',
+  themeMode: 'theme_mode',
 } as const;
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export async function getThemeMode(): Promise<ThemeMode> {
+  const value = await database.localStorage.get<string>(KEYS.themeMode);
+  return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+}
+
+export async function setThemeMode(mode: ThemeMode): Promise<void> {
+  await database.localStorage.set(KEYS.themeMode, mode);
+}
 
 export async function isOnboardingDone(): Promise<boolean> {
   return (await database.localStorage.get<boolean>(KEYS.onboardingDone)) === true;

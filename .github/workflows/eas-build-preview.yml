@@ -3,7 +3,7 @@ name: EAS Build (Android Preview)
 on:
   push:
     branches:
-      - master
+      - alpha-1.0
   workflow_dispatch:
 
 jobs:

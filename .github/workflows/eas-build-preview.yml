@@ -1,4 +1,4 @@
-name: EAS Build (Android Preview)
+name: Preview (Android APK + Web)
 
 on:
   push:
@@ -6,26 +6,29 @@ on:
       - alpha-1.0
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  apk:
     name: Build Android APK via EAS
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Setup EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -35,5 +38,105 @@ jobs:
       # Configure them once as EAS environment variables instead:
       #   npx eas env:create --scope project --environment preview
       # or via https://expo.dev -> your project -> Environment variables
+      # (eas.json's preview profile must set "environment": "preview" for them to apply)
       - name: Build Android APK (preview profile)
-        run: eas build --platform android --profile preview --non-interactive
+        id: build
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile preview --non-interactive --wait --json > build.json
+          apk_url=$(jq -r '.[0].artifacts.buildUrl // empty' build.json)
+          build_id=$(jq -r '.[0].id // empty' build.json)
+          echo "apk_url=$apk_url" >> "$GITHUB_OUTPUT"
+          {
+            echo "## 📱 Android preview build"
+            echo ""
+            if [ -n "$apk_url" ]; then
+              # QR ถูก render โดย api.qrserver.com (บริการภายนอก) — สแกนแล้วโหลด APK ลงมือถือได้เลย
+              # ถ้าไม่อยากส่ง URL ออกนอก GitHub ให้ลบสองบรรทัดล่างนี้ทิ้ง เหลือแค่ลิงก์ดาวน์โหลด
+              qr_data=$(jq -rn --arg u "$apk_url" '$u|@uri')
+              echo "<img src=\"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=$qr_data\" width=\"220\" alt=\"QR ติดตั้ง APK\" />"
+              echo ""
+              echo "สแกน QR ด้วยมือถือ Android เพื่อติดตั้งได้ทันที หรือ [ดาวน์โหลด APK]($apk_url)"
+            else
+              echo "⚠️ ไม่พบ artifact URL จาก EAS"
+            fi
+            echo ""
+            echo "- หน้า build บน expo.dev: https://expo.dev/accounts/devaflow/projects/myapp/builds/$build_id"
+            echo "- ไฟล์ APK แนบไว้ที่ Artifacts ของ run นี้ด้วย"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # EAS เก็บไฟล์ไว้บนเซิร์ฟเวอร์ของ Expo — ดึงมาแนบกับ run เพื่อกดดาวน์โหลดได้จาก GitHub
+      - name: Download APK from EAS
+        if: steps.build.outputs.apk_url != ''
+        run: curl -fL --retry 3 -o habittime-preview.apk "${{ steps.build.outputs.apk_url }}"
+
+      - name: Upload APK artifact
+        if: steps.build.outputs.apk_url != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: habittime-preview-apk
+          path: habittime-preview.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  web:
+    name: Export web preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # GitHub Pages เสิร์ฟที่ /<repo> ไม่ใช่ root — ต้องตั้ง baseUrl ไม่งั้น asset 404 ทั้งหน้า
+      # แก้เฉพาะตอน CI จะได้ไม่กระทบ expo start ตอน dev
+      - name: Set experiments.baseUrl for GitHub Pages
+        run: |
+          set -euo pipefail
+          jq --arg base "/${GITHUB_REPOSITORY#*/}" \
+            '.expo.experiments.baseUrl = $base' app.json > app.json.ci
+          mv app.json.ci app.json
+
+      - name: Export static web build
+        run: npx expo export -p web --output-dir dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy-web:
+    name: Deploy web preview to GitHub Pages
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Add link to job summary
+        run: |
+          {
+            echo "## 🌐 Web preview"
+            echo ""
+            echo "เปิดดูแอปในเบราว์เซอร์ได้เลย: ${{ steps.deployment.outputs.page_url }}"
+            echo ""
+            echo "> โมดูล native (WatermelonDB / SecureStore / Notifications) อาจไม่ทำงานบนเว็บ — ใช้ดู UI/flow เป็นหลัก"
+          } >> "$GITHUB_STEP_SUMMARY"

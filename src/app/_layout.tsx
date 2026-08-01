@@ -5,7 +5,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
-
 import { useColors } from '@/hooks/useColors';
 import { seedDefaultCategoriesIfNeeded } from '@/database/seed';
 import { initEncryption } from '@/lib/crypto/keyManager';

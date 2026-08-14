@@ -83,13 +83,17 @@ export const ACTIVITY_COLORS = [
 /**
  * หมวดหมู่เริ่มต้น — seed ลงฐานข้อมูลตอนเปิดแอปครั้งแรก (สีตามดีไซน์ Figma)
  * ช่อง emoji เก็บ "ชื่อไอคอน lucide" (ดู @/constants/icons)
+ *
+ * ช่อง id ถูกกำหนดตายตัว (ไม่สุ่ม) เพราะทุกเครื่องจะ seed หมวดหมู่ชุดเดียวกันนี้
+ * ตอนติดตั้งครั้งแรก ถ้าปล่อยให้สุ่ม id การซิงก์ข้ามเครื่องจะมองว่าเป็นคนละ
+ * หมวดหมู่ แล้วได้ "เรียนรู้" ซ้ำสองอันบนคลาวด์
  */
 export const DEFAULT_CATEGORIES = [
-  { name: 'เรียนรู้', emoji: 'book-open', color: '#84E0EE' },
-  { name: 'สุขภาพ', emoji: 'dumbbell', color: '#5DEE7F' },
-  { name: 'จิตใจ', emoji: 'brain', color: '#95B8E0' },
-  { name: 'ทำงาน', emoji: 'laptop', color: '#E57D9C' },
-  { name: 'งานอดิเรก', emoji: 'palette', color: '#DEE97B' },
-  { name: 'ฝึกฝน', emoji: 'guitar', color: '#DF6633' },
-  { name: 'อื่น ๆ', emoji: 'ellipsis', color: '#397D84' },
+  { id: 'cat_learning', name: 'เรียนรู้', emoji: 'book-open', color: '#84E0EE' },
+  { id: 'cat_health', name: 'สุขภาพ', emoji: 'dumbbell', color: '#5DEE7F' },
+  { id: 'cat_mind', name: 'จิตใจ', emoji: 'brain', color: '#95B8E0' },
+  { id: 'cat_work', name: 'ทำงาน', emoji: 'laptop', color: '#E57D9C' },
+  { id: 'cat_hobby', name: 'งานอดิเรก', emoji: 'palette', color: '#DEE97B' },
+  { id: 'cat_practice', name: 'ฝึกฝน', emoji: 'guitar', color: '#DF6633' },
+  { id: 'cat_other', name: 'อื่น ๆ', emoji: 'ellipsis', color: '#397D84' },
 ] as const;

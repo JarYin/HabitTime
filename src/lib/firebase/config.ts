@@ -24,13 +24,19 @@ const firebaseConfig = {
 };
 
 /** ตรวจว่าใส่ค่า config ครบไหม — ถ้าขาดจะเป็นสาเหตุหนึ่งของ failed connect */
-const missing = Object.entries(firebaseConfig)
+const missingKeys = Object.entries(firebaseConfig)
   .filter(([, v]) => !v)
   .map(([k]) => k);
 
-if (missing.length > 0) {
+/**
+ * true เมื่อ .env ครบทุกค่า — หน้าจอใช้ค่านี้บอกผู้ใช้ให้ชัดว่า "ยังไม่ได้ตั้งค่า"
+ * แทนที่จะปล่อยให้ Firebase โยน error auth/invalid-api-key แบบงง ๆ
+ */
+export const isFirebaseConfigured = missingKeys.length === 0;
+
+if (!isFirebaseConfigured) {
   console.error(
-    `[Firebase] ตั้งค่าไม่ครบ ขาด: ${missing.join(', ')}\n` +
+    `[Firebase] ตั้งค่าไม่ครบ ขาด: ${missingKeys.join(', ')}\n` +
       'ใส่ค่าในไฟล์ .env (คัดลอกจาก .env.example) แล้วรีสตาร์ท Metro ด้วย: npx expo start -c',
   );
 }

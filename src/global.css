@@ -29,9 +29,16 @@
   --font-serif: Georgia, 'Times New Roman', serif;
 }
 
-/* โหมดมืด — NativeWind ใช้ media query นี้เป็นตัวแปร dark และสลับด้วย colorScheme.set() */
+/*
+ * โหมดมืด — ประกาศสองที่เพราะ NativeWind ตั้ง darkMode: 'class' (ดู tailwind.config.js)
+ *
+ * 1) บล็อก media query ด้านล่าง: ใช้ตอนที่ NativeWind ยังไม่ได้ปั๊มคลาสลงบน <html>
+ *    (เช่นก่อน JS ทำงาน หรือโหมด "อัตโนมัติ") — จึงต้อง :not(.light):not(.dark)
+ *    ไม่งั้นผู้ใช้ที่ OS เป็นมืดแต่เลือกธีม "สว่าง" จะยังได้สีมืดจาก media query
+ * 2) บล็อก :root.dark ถัดไป: ใช้ตอนผู้ใช้เลือกธีมมืดเอง (คลาสชนะ media query)
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.dark) {
     --color-background: 18 18 22;
     --color-surface: 30 30 36;
     --color-surface2: 42 42 49;
@@ -47,4 +54,21 @@
     --color-danger: 255 107 107;
     --color-warn: 242 193 78;
   }
+}
+
+:root.dark {
+  --color-background: 18 18 22;
+  --color-surface: 30 30 36;
+  --color-surface2: 42 42 49;
+  --color-stroke: 51 48 57;
+  --color-primary: 78 99 255;
+  --color-primary-deep: 154 166 255;
+  --color-primary-soft: 42 46 92;
+  --color-ink: 244 242 245;
+  --color-muted: 167 162 174;
+  --color-subtle: 110 106 117;
+  --color-track: 58 54 63;
+  --color-success: 107 203 119;
+  --color-danger: 255 107 107;
+  --color-warn: 242 193 78;
 }

@@ -6,23 +6,18 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
-import { setOnboardingDone } from '@/services/settingsService';
-import { useAppStore } from '@/stores/appStore';
 
 const FEATURE_ICONS: LucideIcon[] = [Target, Timer, ChartColumn];
 
 /**
  * หน้าเริ่มต้นใช้งาน (Landing) — โลโก้แอป + จุดเด่น 3 อย่าง + ปุ่มเข้าใช้งาน/เข้าสู่ระบบ
  * ดีไซน์ตาม Figma "landing page"
+ *
+ * ทั้งสองปุ่มพาไปหน้าเดียวกัน ต่างกันแค่แท็บที่เปิดค้างไว้ (สมัคร / เข้าสู่ระบบ)
+ * เมื่อล็อกอินสำเร็จ Stack.Protected ใน root layout จะพาเข้าหน้าหลักเอง
  */
 export default function LandingScreen() {
   const c = useColors();
-  const setOnboarded = useAppStore((s) => s.setOnboarded);
-
-  const start = async () => {
-    await setOnboardingDone();
-    setOnboarded(true); // Stack.Protected พาเข้า (tabs) อัตโนมัติ
-  };
 
   return (
     <Screen className="px-8">
@@ -74,7 +69,10 @@ export default function LandingScreen() {
 
       {/* ปุ่ม */}
       <View className="pb-6">
-        <PrimaryButton label={STR.landing.start} onPress={() => void start()} />
+        <PrimaryButton
+          label={STR.landing.start}
+          onPress={() => router.push({ pathname: '/login', params: { mode: 'register' } } as never)}
+        />
         <PrimaryButton
           label={STR.landing.haveAccount}
           onPress={() => router.push('/login' as never)}

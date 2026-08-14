@@ -1,4 +1,4 @@
-import { Lock, Minus, Plus } from 'lucide-react-native';
+import { CloudCheck, CloudAlert, Lock, Minus, Plus, RefreshCw } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
@@ -9,19 +9,17 @@ import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import type { ThemeMode } from '@/services/settingsService';
 import { useThemeStore } from '@/stores/themeStore';
-import { activitiesCollection, database, sessionsCollection } from '@/database';
-import { seedDefaultCategoriesIfNeeded } from '@/database/seed';
+import { activitiesCollection, sessionsCollection } from '@/database';
 import { useQueryCount } from '@/hooks/useQuery';
 import {
   cancelDailyReminder,
   ensureNotificationPermission,
   scheduleDailyReminder,
 } from '@/services/notificationService';
-import {
-  getReminderSettings,
-  setOnboardingDone,
-  setReminderSettings,
-} from '@/services/settingsService';
+import { getReminderSettings, setReminderSettings } from '@/services/settingsService';
+import { syncNow, wipeAllData } from '@/services/syncService';
+import { useAuthStore } from '@/stores/authStore';
+import { useSyncStore } from '@/stores/syncStore';
 
 /**
  * หน้าตั้งค่า — แจ้งเตือนรายวัน (local ล้วน), ข้อมูลความเป็นส่วนตัว,
@@ -99,12 +97,16 @@ export default function SettingsScreen() {
 
   const wipeAll = async () => {
     await cancelDailyReminder();
-    await database.write(async () => {
-      await database.unsafeResetDatabase();
-    });
-    // reset ล้าง localStorage ในไฟล์ DB ด้วย — คืนค่าที่จำเป็นกลับ
-    await setOnboardingDone();
-    await seedDefaultCategoriesIfNeeded();
+    try {
+      // ลบทั้งบนเครื่องและบนคลาวด์ — ถ้าลบแค่ในเครื่อง การซิงก์รอบหน้าจะดึงกลับมา
+      await wipeAllData();
+    } catch (error) {
+      Alert.alert(
+        STR.settings.wipeFailed,
+        error instanceof Error ? error.message : String(error),
+      );
+      return;
+    }
     setEnabled(false);
   };
 
@@ -123,6 +125,9 @@ export default function SettingsScreen() {
             onChange={(m: ThemeMode) => setThemeModeState(m)}
           />
         </View>
+
+        {/* ซิงก์ข้อมูลกับคลาวด์ */}
+        <SyncCard />
 
         {/* การแจ้งเตือน */}
         <View className="rounded-2xl border border-stroke bg-surface p-4">
@@ -188,6 +193,73 @@ export default function SettingsScreen() {
       </ScrollView>
     </Screen>
   );
+}
+
+/**
+ * การ์ดสถานะการซิงก์ — บอกว่าตอนนี้ข้อมูลขึ้นคลาวด์ถึงไหนแล้ว
+ * และให้กดซิงก์เองได้ (ปกติระบบซิงก์อัตโนมัติอยู่แล้ว ดู syncService)
+ */
+function SyncCard() {
+  const c = useColors();
+  const user = useAuthStore((s) => s.user);
+  const status = useSyncStore((s) => s.status);
+  const lastSyncedAt = useSyncStore((s) => s.lastSyncedAt);
+  const error = useSyncStore((s) => s.error);
+
+  const syncing = status === 'syncing';
+  const failed = status === 'error';
+
+  const statusText = syncing
+    ? STR.sync.syncing
+    : lastSyncedAt
+      ? STR.sync.lastSynced(formatSyncTime(lastSyncedAt))
+      : STR.sync.never;
+
+  return (
+    <View className="mb-4 rounded-2xl border border-stroke bg-surface p-4">
+      <View className="flex-row items-center">
+        {failed ? (
+          <CloudAlert size={16} color={c.danger} />
+        ) : (
+          <CloudCheck size={16} color={c.success} />
+        )}
+        <Text className="ml-2 flex-1 text-base font-semibold text-ink">{STR.sync.title}</Text>
+        <Pressable
+          onPress={() => void syncNow()}
+          disabled={syncing}
+          hitSlop={8}
+          style={syncing ? { opacity: 0.5 } : undefined}
+          className="flex-row items-center rounded-xl bg-surface2 px-3 py-1.5"
+        >
+          <RefreshCw size={13} color={c.primary} />
+          <Text className="ml-1.5 text-xs font-bold text-primary">{STR.sync.syncNow}</Text>
+        </Pressable>
+      </View>
+
+      {user && (
+        <Text className="mt-3 text-sm text-muted">
+          {STR.sync.account}: <Text className="text-ink">{user.email}</Text>
+        </Text>
+      )}
+      <Text className="mt-1 text-xs text-subtle">{statusText}</Text>
+
+      {failed && error && (
+        <Text className="mt-2 text-xs text-danger">
+          {STR.sync.failed} — {error}
+        </Text>
+      )}
+
+      <Text className="mt-3 text-sm leading-6 text-muted">{STR.sync.body}</Text>
+    </View>
+  );
+}
+
+/** เวลาซิงก์ล่าสุด — วันนี้แสดงแค่เวลา วันอื่นเติมวัน/เดือนไว้ข้างหน้า */
+function formatSyncTime(ms: number): string {
+  const at = new Date(ms);
+  const time = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')} น.`;
+  const isToday = at.toDateString() === new Date().toDateString();
+  return isToday ? `${STR.common.today} ${time}` : `${at.getDate()}/${at.getMonth() + 1} ${time}`;
 }
 
 function Stepper({

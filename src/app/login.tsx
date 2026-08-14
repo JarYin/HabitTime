@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -7,23 +7,69 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
-import { setOnboardingDone } from '@/services/settingsService';
-import { useAppStore } from '@/stores/appStore';
+import { isFirebaseConfigured } from '@/lib/firebase/config';
+import { registerWithEmail, sendResetEmail, signInWithEmail } from '@/services/authService';
+
+type Mode = 'login' | 'register';
 
 /**
  * หน้าเข้าสู่ระบบ / สมัครสมาชิก (ดีไซน์ตาม Figma "login page")
+ *
+ * เมื่อล็อกอินสำเร็จไม่ต้อง navigate เอง — observeAuth ใน root layout จะอัปเดต
+ * useAuthStore แล้ว Stack.Protected พาเข้าหน้าหลักให้เอง
  */
 export default function LoginScreen() {
   const c = useColors();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<Mode>(params.mode === 'register' ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const setOnboarded = useAppStore((s) => s.setOnboarded);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setNotice(null);
+  };
 
   const submit = async () => {
-    await setOnboardingDone();
-    setOnboarded(true);
+    if (busy) return;
+    setError(null);
+    setNotice(null);
+
+    if (!email.trim()) return setError(STR.login.emailRequired);
+    if (!password) return setError(STR.login.passwordRequired);
+
+    setBusy(true);
+    try {
+      if (mode === 'register') {
+        await registerWithEmail(email, password);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const forgotPassword = async () => {
+    if (busy) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      await sendResetEmail(email);
+      setNotice(STR.login.resetSent);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -46,7 +92,7 @@ export default function LoginScreen() {
           return (
             <Pressable
               key={m}
-              onPress={() => setMode(m)}
+              onPress={() => switchMode(m)}
               className="flex-1 items-center rounded-xl py-2.5"
               style={{ backgroundColor: active ? c.primary : 'transparent' }}
             >
@@ -72,6 +118,8 @@ export default function LoginScreen() {
           placeholderTextColor={c.subtle}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
+          editable={!busy}
           className="ml-2 flex-1 py-3.5 text-base text-ink"
         />
       </View>
@@ -86,6 +134,10 @@ export default function LoginScreen() {
           placeholder={STR.login.passwordPlaceholder}
           placeholderTextColor={c.subtle}
           secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+          editable={!busy}
+          onSubmitEditing={() => void submit()}
           className="ml-2 flex-1 py-3.5 text-base text-ink"
         />
         <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
@@ -93,15 +145,33 @@ export default function LoginScreen() {
         </Pressable>
       </View>
 
+      {mode === 'register' && (
+        <Text className="mt-2 text-xs text-subtle">{STR.login.passwordHint}</Text>
+      )}
+
       {mode === 'login' && (
-        <Pressable onPress={() => void submit()} hitSlop={6} className="mt-3 self-end">
+        <Pressable onPress={() => void forgotPassword()} hitSlop={6} className="mt-3 self-end">
           <Text className="text-xs font-semibold text-primary">{STR.login.forgot}</Text>
         </Pressable>
       )}
 
+      {/* ผลลัพธ์ของการกดปุ่มล่าสุด */}
+      {!isFirebaseConfigured && (
+        <Text className="mt-4 text-sm text-danger">{STR.login.notConfigured}</Text>
+      )}
+      {error && <Text className="mt-4 text-sm text-danger">{error}</Text>}
+      {notice && <Text className="mt-4 text-sm text-success">{notice}</Text>}
+
       <PrimaryButton
-        label={mode === 'login' ? STR.login.submit : STR.login.submitRegister}
+        label={
+          busy
+            ? STR.login.working
+            : mode === 'login'
+              ? STR.login.submit
+              : STR.login.submitRegister
+        }
         onPress={() => void submit()}
+        loading={busy}
         className="mt-7"
       />
     </Screen>

@@ -20,18 +20,18 @@ import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
 import { formatDuration } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
+import { displayNameOf, signOutUser } from '@/services/authService';
 import { historyQuery } from '@/services/sessionService';
 import { currentStreak } from '@/services/statsService';
-import { useAppStore } from '@/stores/appStore';
-
-const DISPLAY_NAME = 'ผู้ใช้ HabitTime';
+import { useAuthStore } from '@/stores/authStore';
 
 /** หน้าโปรไฟล์ (ดีไซน์ Figma "profile page") — ข้อมูลผู้ใช้ + สถิติรวม + เมนูตั้งค่า */
 export default function ProfileScreen() {
   const activities = useQueryList(() => activeActivitiesQuery(), []);
   const allSessions = useQueryList(() => historyQuery(), []);
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const setOnboarded = useAppStore((s) => s.setOnboarded);
+  const user = useAuthStore((s) => s.user);
+  const displayName = displayNameOf(user);
 
   const totalSec = useMemo(
     () => allSessions.reduce((sum, s) => sum + s.durationSec, 0),
@@ -51,11 +51,11 @@ export default function ProfileScreen() {
             style={primaryShadow}
           >
             <Text className="text-3xl font-extrabold text-white">
-              {DISPLAY_NAME.trim().charAt(0)}
+              {displayName.trim().charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text className="mt-3 text-lg font-extrabold text-ink">{DISPLAY_NAME}</Text>
-          <Text className="mt-0.5 text-xs text-muted">{STR.landing.tagline}</Text>
+          <Text className="mt-3 text-lg font-extrabold text-ink">{displayName}</Text>
+          <Text className="mt-0.5 text-xs text-muted">{user?.email ?? STR.landing.tagline}</Text>
 
           {/* ป้าย streak */}
           <View
@@ -109,7 +109,8 @@ export default function ProfileScreen() {
         onCancel={() => setConfirmLogout(false)}
         onConfirm={() => {
           setConfirmLogout(false);
-          setOnboarded(false);
+          // ไม่ต้อง navigate เอง — authStore เปลี่ยนแล้ว Stack.Protected พากลับหน้าแรกให้
+          void signOutUser();
         }}
       />
     </Screen>

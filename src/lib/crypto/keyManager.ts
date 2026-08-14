@@ -1,10 +1,12 @@
 /**
- * จัดการกุญแจเข้ารหัสฐานข้อมูล (Data Encryption Key)
+ * จัดการกุญแจเข้ารหัสฐานข้อมูล (Data Encryption Key) — ฝั่ง native
  *
  * - สร้างครั้งแรกด้วย CSPRNG (expo-crypto) ขนาด 32 ไบต์
  * - เก็บใน expo-secure-store ซึ่งบน Android หนุนด้วย Android Keystore
  *   (ค่าถูกเข้ารหัสด้วยกุญแจฮาร์ดแวร์ ไม่หลุดออกจากเครื่อง และแอปอื่นอ่านไม่ได้)
  * - โหลดเข้าหน่วยความจำตอนเปิดแอป ก่อน render UI ใด ๆ ที่แตะฐานข้อมูล
+ *
+ * ฝั่งเว็บใช้ keyManager.web.ts แทน เพราะ expo-secure-store ไม่รองรับเว็บ
  */
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';

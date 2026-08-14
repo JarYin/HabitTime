@@ -1,0 +1,38 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules ของ HabitTime
+ *
+ * โมเดลความปลอดภัย: ข้อมูลถูกเก็บเป็น plaintext บนคลาวด์ กำแพงกั้นเดียวคือกฎชุดนี้
+ * หลักการคือ "ผู้ใช้แตะได้เฉพาะเอกสารใต้ users/{ตัวเอง} เท่านั้น"
+ *
+ * วิธีนำไปใช้:
+ *   Firebase Console → Firestore Database → Rules → วางทั้งไฟล์นี้ → Publish
+ *   (หรือถ้าใช้ Firebase CLI: firebase deploy --only firestore:rules)
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // เจ้าของเอกสารคือคนที่ล็อกอินอยู่และ uid ตรงกับ path เท่านั้น
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // โปรไฟล์ผู้ใช้ — users/{uid}
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // ข้อมูลแอปทั้งหมดที่ sync ขึ้นมา (categories, activities, time_sessions)
+      // จำกัดชื่อคอลเลกชันไว้ ไม่ให้ client สร้างคอลเลกชันมั่วใต้บัญชีตัวเอง
+      match /{collection}/{docId} {
+        allow read, write: if isOwner(userId)
+          && collection in ['categories', 'activities', 'time_sessions'];
+      }
+    }
+
+    // ทุก path นอกเหนือจากนี้: ปฏิเสธทั้งหมด
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

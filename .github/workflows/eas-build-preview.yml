@@ -105,8 +105,23 @@ jobs:
             '.expo.experiments.baseUrl = $base' app.json > app.json.ci
           mv app.json.ci app.json
 
+      # ต่างจากจ๊อบ APK: การ export เว็บรันบน runner ตัวนี้เอง ไม่ได้ไปรันบน EAS
+      # ค่า EXPO_PUBLIC_* จึงต้องมาจาก GitHub Secrets (ไฟล์ .env ถูก gitignore ไว้)
+      # ถ้าไม่ใส่ ตัวแอปจะ build ผ่านแต่หน้าล็อกอินจะขึ้นว่า "ยังไม่ได้ตั้งค่า Firebase"
       - name: Export static web build
+        env:
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
         run: npx expo export -p web --output-dir dist
+
+      # GitHub Pages เสิร์ฟไฟล์ตรง ๆ ไม่มี SPA fallback — ถ้าผู้ใช้กด refresh ค้างอยู่
+      # ที่ route ย่อยที่ไม่มีไฟล์ .html ตรงกัน จะเจอหน้า 404 ของ GitHub แทนตัวแอป
+      - name: Add SPA fallback for GitHub Pages
+        run: cp dist/index.html dist/404.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

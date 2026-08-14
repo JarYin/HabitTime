@@ -2,6 +2,10 @@
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // ต้องเป็น 'class' ไม่ใช่ค่าเริ่มต้น 'media' — ไม่งั้น colorScheme.set() ใน themeStore
+  // จะโยน "Cannot manually set color scheme, as dark mode is type 'media'" บนเว็บ
+  // ซึ่งทำให้ init ของแอปพังทั้งชุด (ดูบล็อก :root.dark ใน global.css ประกอบ)
+  darkMode: 'class',
   theme: {
     extend: {
       // สีอ้างอิง CSS variables (กำหนดใน global.css) เพื่อให้สลับ light/dark ได้ runtime

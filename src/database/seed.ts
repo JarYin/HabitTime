@@ -12,6 +12,9 @@ export async function seedDefaultCategoriesIfNeeded(): Promise<void> {
   await database.write(async () => {
     const records = DEFAULT_CATEGORIES.map((cat, index) =>
       categoriesCollection.prepareCreate((c) => {
+        // ใช้ id ตายตัวจาก DEFAULT_CATEGORIES เพื่อให้ทุกเครื่องได้ id เดียวกัน
+        // มิฉะนั้นการซิงก์จะสร้างหมวดหมู่ซ้ำบนคลาวด์ (ดูหมายเหตุใน palette.ts)
+        c._raw.id = cat.id;
         c.name = cat.name;
         c.emoji = cat.emoji;
         c.color = cat.color;

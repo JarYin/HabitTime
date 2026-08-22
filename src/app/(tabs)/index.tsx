@@ -1,22 +1,27 @@
 import { router } from 'expo-router';
 import { Bell, Flame, Plus, Target, Timer, type LucideIcon } from 'lucide-react-native';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import ActivityCard from '@/components/ActivityCard';
 import EmptyState from '@/components/EmptyState';
+import NotificationsModal from '@/components/NotificationsModal';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
 import { addDays, formatDuration, greetingKey, toDayKey } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
+import { displayNameOf } from '@/services/authService';
 import { categoriesQuery } from '@/services/categoryService';
+import { buildNotificationFeed } from '@/services/notificationFeedService';
 import { historyQuery } from '@/services/sessionService';
+import { getReminderSettings, type ReminderSettings } from '@/services/settingsService';
 import { currentStreak, totalsByActivity } from '@/services/statsService';
+import { useAuthStore } from '@/stores/authStore';
+import { useGoalStore } from '@/stores/goalStore';
 
 const DASHBOARD_ACTIVITY_LIMIT = 5;
-const DAILY_GOAL_HOURS = 4;
 
 /** Dashboard (หน้าแรก) — ดีไซน์ตาม Figma "home page" */
 export default function DashboardScreen() {
@@ -24,6 +29,11 @@ export default function DashboardScreen() {
   const now = new Date();
   const todayKey = toDayKey(now);
   const weekAgoKey = toDayKey(addDays(now, -6));
+
+  const user = useAuthStore((s) => s.user);
+  const goalMinutes = useGoalStore((s) => s.minutes);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [reminder, setReminder] = useState<ReminderSettings | null>(null);
 
   const activities = useQueryList(() => activeActivitiesQuery(), []);
   const categories = useQueryList(() => categoriesQuery(), []);
@@ -46,9 +56,19 @@ export default function DashboardScreen() {
     [categories],
   );
 
-  const goalSec = DAILY_GOAL_HOURS * 3600;
+  const goalSec = Math.max(60, goalMinutes * 60);
   const goalPct = Math.min(100, Math.round((todayTotalSec / goalSec) * 100));
   const activitiesTodayCount = new Set(todaySessions.map((s) => s.activityId)).size;
+
+  const feed = useMemo(
+    () => buildNotificationFeed({ weekSessions, streak, goalMinutes, reminder, now }),
+    [weekSessions, streak, goalMinutes, reminder, todayKey],
+  );
+
+  const openNotifications = async () => {
+    setReminder(await getReminderSettings());
+    setNotifOpen(true);
+  };
 
   const greeting =
     STR.dashboard[
@@ -66,10 +86,10 @@ export default function DashboardScreen() {
         <View className="flex-row items-center justify-between px-5 pt-3">
           <View>
             <Text className="text-sm font-medium text-muted">{greeting}</Text>
-            <Text className="mt-0.5 text-2xl font-extrabold text-ink">{STR.dashboard.guestName}</Text>
+            <Text className="mt-0.5 text-2xl font-extrabold text-ink">{displayNameOf(user)}</Text>
           </View>
           <Pressable
-            onPress={() => router.push('/settings')}
+            onPress={() => void openNotifications()}
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
             style={cardShadow}
@@ -88,7 +108,7 @@ export default function DashboardScreen() {
             <View className="h-1.5 rounded-full bg-white" style={{ width: `${Math.max(2, goalPct)}%` }} />
           </View>
           <Text className="mt-2 text-[11px] font-medium text-white/90">
-            {STR.dashboard.goalProgress(goalPct, DAILY_GOAL_HOURS)}
+            {STR.dashboard.goalProgress(goalPct, formatDuration(goalSec))}
           </Text>
         </View>
 
@@ -144,6 +164,12 @@ export default function DashboardScreen() {
       >
         <Plus size={30} color="#FFFFFF" />
       </Pressable>
+
+      <NotificationsModal
+        visible={notifOpen}
+        items={feed}
+        onClose={() => setNotifOpen(false)}
+      />
     </Screen>
   );
 }

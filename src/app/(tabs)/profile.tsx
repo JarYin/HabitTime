@@ -80,9 +80,9 @@ export default function ProfileScreen() {
 
         {/* เมนู กลุ่มบัญชี */}
         <View className="mx-5 mt-5 overflow-hidden rounded-2xl bg-surface" style={cardShadow}>
-          <MenuRow icon={Pencil} label={STR.profile.editProfile} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Pencil} label={STR.profile.editProfile} onPress={() => router.push('/account')} />
           <RowDivider />
-          <MenuRow icon={Flag} label={STR.profile.dailyGoal} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Flag} label={STR.profile.dailyGoal} onPress={() => router.push('/goal')} />
           <RowDivider />
           <MenuRow icon={Bell} label={STR.profile.notifications} onPress={() => router.push('/settings')} />
         </View>

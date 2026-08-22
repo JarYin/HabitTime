@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -17,19 +18,26 @@ import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth } from '@/lib/firebase/auth';
 import { db, isFirebaseConfigured } from '@/lib/firebase/config';
 
+const FALLBACK_DISPLAY_NAME = 'ผู้ใช้ HabitTime';
+export const MAX_DISPLAY_NAME_LENGTH = 40;
+
 export interface AuthUser {
   uid: string;
   email: string;
+  /** ชื่อที่ผู้ใช้ตั้งเอง — undefined = ยังไม่เคยตั้ง (ให้ fallback เป็นชื่อจากอีเมล) */
+  displayName?: string;
 }
 
-/** ชื่อที่เอาไปโชว์ในหน้าโปรไฟล์ — ใช้ส่วนหน้า @ ของอีเมล */
+/** ชื่อที่เอาไปโชว์ในหน้าโปรไฟล์ — ใช้ชื่อที่ตั้งเองก่อน ถ้าไม่มีค่อยใช้ส่วนหน้า @ ของอีเมล */
 export function displayNameOf(user: AuthUser | null): string {
-  if (!user) return 'ผู้ใช้ HabitTime';
-  return user.email.split('@')[0] || 'ผู้ใช้ HabitTime';
+  if (!user) return FALLBACK_DISPLAY_NAME;
+  const chosen = user.displayName?.trim();
+  if (chosen) return chosen;
+  return user.email.split('@')[0] || FALLBACK_DISPLAY_NAME;
 }
 
 function toAuthUser(user: User): AuthUser {
-  return { uid: user.uid, email: user.email ?? '' };
+  return { uid: user.uid, email: user.email ?? '', displayName: user.displayName ?? undefined };
 }
 
 /** แปลง error code ของ Firebase เป็นข้อความที่ผู้ใช้อ่านรู้เรื่อง */
@@ -117,6 +125,38 @@ export async function sendResetEmail(email: string): Promise<void> {
 export async function signOutUser(): Promise<void> {
   try {
     await signOut(auth);
+  } catch (error) {
+    throw toFriendlyError(error);
+  }
+}
+
+/**
+ * แก้ชื่อที่แสดง — เขียนทั้งใน Firebase Auth profile และมิเรอร์ลงเอกสาร users/{uid}
+ *
+ * คืน AuthUser ตัวใหม่กลับไปให้หน้าจอเรียก useAuthStore.setUser() เอง เพราะ
+ * updateProfile ไม่ทำให้ onAuthStateChanged (ที่ observeAuth ใช้) ยิงซ้ำ —
+ * SDK ยิง authStateSubscription เฉพาะตอน uid เปลี่ยนเท่านั้น
+ */
+export async function updateDisplayName(name: string): Promise<AuthUser> {
+  requireConfigured();
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('กรุณากรอกชื่อที่แสดง');
+  if (trimmed.length > MAX_DISPLAY_NAME_LENGTH) {
+    throw new Error(`ชื่อยาวเกิน ${MAX_DISPLAY_NAME_LENGTH} ตัวอักษร`);
+  }
+
+  const user = auth.currentUser;
+  if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+
+  try {
+    await updateProfile(user, { displayName: trimmed });
+    // มิเรอร์ลง Firestore ด้วย เผื่อดูข้อมูลผู้ใช้จากฝั่งคลาวด์ (rules อนุญาตอยู่แล้ว)
+    await setDoc(
+      doc(db, 'users', user.uid),
+      { displayName: trimmed, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    return toAuthUser(user);
   } catch (error) {
     throw toFriendlyError(error);
   }

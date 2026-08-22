@@ -14,6 +14,7 @@ import { configureNotifications } from '@/services/notificationService';
 import { hydrateSyncState, startAutoSync, syncNow } from '@/services/syncService';
 import { useAppStore } from '@/stores/appStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useGoalStore } from '@/stores/goalStore';
 import { useThemeStore } from '@/stores/themeStore';
 
 SplashScreen.preventAutoHideAsync();
@@ -27,6 +28,7 @@ export default function RootLayout() {
   // token ด้วย ถ้าผูกกับ object จะเริ่ม/หยุด auto sync ใหม่ทุกครั้งโดยไม่จำเป็น
   const uid = useAuthStore((s) => s.user?.uid ?? null);
   const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const hydrateGoal = useGoalStore((s) => s.hydrate);
   const colors = useColors();
   const { colorScheme } = useColorScheme();
 
@@ -50,6 +52,7 @@ export default function RootLayout() {
         await seedDefaultCategoriesIfNeeded();
         await configureNotifications();
         await hydrateSyncState();
+        await hydrateGoal();
       } catch (error) {
         console.error('[HabitTime] app init failed', error);
       } finally {
@@ -59,7 +62,7 @@ export default function RootLayout() {
     return () => {
       cancelled = true;
     };
-  }, [setReady, hydrateTheme]);
+  }, [setReady, hydrateTheme, hydrateGoal]);
 
   // ติดตามสถานะล็อกอินตลอดอายุแอป — Firebase คืนค่าจาก session ที่เก็บไว้ให้เอง
   useEffect(() => {
@@ -104,6 +107,8 @@ export default function RootLayout() {
           <Stack.Screen name="activity/[id]/edit" />
           <Stack.Screen name="timer/[id]" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="account" />
+          <Stack.Screen name="goal" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="onboarding" />

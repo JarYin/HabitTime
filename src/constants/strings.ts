@@ -69,6 +69,22 @@ export const STR = {
       'ข้อมูลที่ซิงก์ไว้แล้วยังอยู่ในบัญชีของคุณ เข้าสู่ระบบอีกครั้งเมื่อไหร่ก็ได้ข้อมูลกลับมา',
   },
 
+  account: {
+    title: 'แก้ไขข้อมูลส่วนตัว',
+    displayName: 'ชื่อที่แสดง',
+    namePlaceholder: 'เช่น สมชาย',
+    nameHint: 'ชื่อนี้จะแสดงบนหน้าแรกและหน้าโปรไฟล์',
+    email: 'อีเมล',
+    emailLocked: 'อีเมลนี้ใช้สำหรับเข้าสู่ระบบ จึงเปลี่ยนในแอปไม่ได้',
+    save: 'บันทึกการแก้ไข',
+    saving: 'กำลังบันทึก...',
+    saved: 'บันทึกชื่อเรียบร้อยแล้ว',
+    security: 'ความปลอดภัย',
+    sendReset: 'ส่งลิงก์รีเซ็ตรหัสผ่าน',
+    resetHint: 'ระบบจะส่งลิงก์ไปที่อีเมลด้านบน เพื่อให้คุณตั้งรหัสผ่านใหม่เอง',
+    resetSent: 'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว กรุณาตรวจกล่องจดหมาย',
+  },
+
   onboarding: {
     slides: [
       {
@@ -95,9 +111,8 @@ export const STR = {
     greetingMorning: 'สวัสดีตอนเช้า',
     greetingAfternoon: 'สวัสดีตอนบ่าย',
     greetingEvening: 'สวัสดีตอนเย็น',
-    guestName: 'เพื่อน',
     todayTotal: 'เวลารวมวันนี้',
-    goalProgress: (pct: number, goalHours: number) => `${pct}% ของเป้าหมาย ${goalHours} ชม.`,
+    goalProgress: (pct: number, goalLabel: string) => `${pct}% ของเป้าหมาย ${goalLabel}`,
     streak: 'ทำต่อเนื่อง',
     streakValue: (days: number) => `${days} วัน`,
     activitiesToday: 'กิจกรรมวันนี้',
@@ -107,6 +122,33 @@ export const STR = {
     seeAll: 'ดูทั้งหมด',
     empty: 'ยังไม่มีกิจกรรม แตะปุ่ม + เพื่อสร้างกิจกรรมแรกของคุณ',
     calendar: 'ปฏิทินกิจกรรม',
+  },
+
+  notifications: {
+    title: 'การแจ้งเตือน',
+    empty: 'ยังไม่มีการแจ้งเตือนในตอนนี้',
+
+    goalHitTitle: 'ถึงเป้าหมายวันนี้แล้ว',
+    goalHitBody: (total: string) => `วันนี้คุณบันทึกเวลาไปแล้ว ${total} ทำได้ดีมาก`,
+    goalProgressTitle: (pct: number) => `ทำได้ ${pct}% ของเป้าหมายวันนี้`,
+    goalProgressBody: (remaining: string) => `เหลืออีก ${remaining} ก็ถึงเป้าหมายแล้ว`,
+
+    idleTitle: 'วันนี้ยังไม่ได้บันทึกเวลา',
+    idleBody: 'เริ่มจับเวลากิจกรรมสักอย่าง เพื่อไม่ให้วันนี้ผ่านไปเปล่า ๆ',
+    idleStreakBody: (days: number) => `อย่าให้สตรีค ${days} วันของคุณขาด บันทึกเวลาก่อนหมดวันนะ`,
+
+    streakTitle: (days: number) => `สตรีค ${days} วัน`,
+    streakBody: 'ทำต่อเนื่องได้ดีมาก รักษาจังหวะนี้ไว้',
+    streakBrokenTitle: 'สตรีคขาดแล้ว',
+    streakBrokenBody: 'ไม่เป็นไร เริ่มนับใหม่ได้ตั้งแต่วันนี้เลย',
+
+    weekTitle: 'สรุป 7 วันล่าสุด',
+    weekBody: (total: string, days: number) => `รวม ${total} จาก ${days} วันที่มีการบันทึก`,
+
+    reminderNextTitle: 'แจ้งเตือนถัดไป',
+    reminderNextBody: (time: string) => `ระบบจะเตือนให้จับเวลาตอน ${time} น.`,
+    reminderOffTitle: 'ยังไม่ได้เปิดการแจ้งเตือน',
+    reminderOffBody: 'เปิด "เตือนให้จับเวลาทุกวัน" ได้ที่หน้าตั้งค่า จะได้ไม่ลืมบันทึกเวลา',
   },
 
   activities: {
@@ -214,6 +256,19 @@ export const STR = {
     wipeConfirm: 'ลบทั้งหมด',
     wipeFailed: 'ลบข้อมูลไม่สำเร็จ',
     permissionDenied: 'ไม่ได้รับสิทธิ์แจ้งเตือน กรุณาเปิดในตั้งค่าของระบบ',
+  },
+
+  goal: {
+    title: 'เป้าหมายรายวัน',
+    goalPerDay: 'เป้าหมายต่อวัน',
+    goalHint: 'ปรับได้ครั้งละ 15 นาที นับรวมทุกกิจกรรมในหนึ่งวัน',
+    todayTitle: 'ความคืบหน้าวันนี้',
+    todayProgress: (pct: number) => `${pct}% ของเป้าหมาย`,
+    todayRemaining: (remaining: string) => `เหลืออีก ${remaining}`,
+    todayHit: 'ถึงเป้าหมายวันนี้แล้ว',
+    last7days: '7 วันล่าสุด',
+    hitCount: (hit: number) => `ถึงเป้าหมาย ${hit} จาก 7 วัน`,
+    noData: 'ยังไม่มีการบันทึกเวลาในช่วง 7 วันนี้',
   },
 
   common: {

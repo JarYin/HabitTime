@@ -84,7 +84,7 @@ export default function ProfileScreen() {
           <RowDivider />
           <MenuRow icon={Flag} label={STR.profile.dailyGoal} onPress={() => router.push('/goal')} />
           <RowDivider />
-          <MenuRow icon={Bell} label={STR.profile.notifications} onPress={() => router.push('/settings')} />
+          <MenuRow icon={Bell} label={STR.profile.notifications} onPress={() => router.push('/notifications')} />
         </View>
 
         {/* เมนู กลุ่มระบบ */}

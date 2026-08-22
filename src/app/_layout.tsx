@@ -109,6 +109,7 @@ export default function RootLayout() {
           <Stack.Screen name="settings" />
           <Stack.Screen name="account" />
           <Stack.Screen name="goal" />
+          <Stack.Screen name="notifications" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="onboarding" />

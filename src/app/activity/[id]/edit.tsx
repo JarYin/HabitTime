@@ -65,7 +65,9 @@ export default function EditActivityScreen() {
         onConfirm={async () => {
           setConfirmDelete(false);
           await deleteActivity(activity);
-          router.back();
+          // ลบแล้วกลับไปหน้าหลักเลย ไม่ใช่แค่ back() ทีละหน้า —
+          // ไม่งั้นจะไปโผล่หน้ารายละเอียดของกิจกรรมที่เพิ่งลบไปแล้ว
+          router.dismissAll();
         }}
       />
     </Screen>

@@ -17,7 +17,7 @@ interface ActivityFormProps {
   categories: Category[];
   initial?: Partial<ActivityInput>;
   submitLabel: string;
-  onSubmit: (input: ActivityInput) => void;
+  onSubmit: (input: ActivityInput) => void | Promise<void>;
   /** ปุ่มยกเลิก (หน้าแก้ไข) — ถ้ามีจะแสดงคู่กับปุ่มบันทึก */
   onCancel?: () => void;
 }
@@ -39,13 +39,22 @@ export default function ActivityForm({
   const [emoji, setEmoji] = useState<string>(initial?.emoji ?? ACTIVITY_ICONS[0]);
   const [color, setColor] = useState(initial?.color ?? ACTIVITY_COLORS[0]);
   const [error, setError] = useState('');
+  // ล็อกปุ่มระหว่างรอบันทึก — onSubmit เป็น async (เขียน DB แล้วค่อย navigate)
+  // ถ้าไม่ล็อก กดรัว ๆ จะสร้างกิจกรรมซ้ำ หรือยิง router.back() ซ้อนจนเด้งเกินหน้า
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (submitting) return;
     if (!name.trim()) {
       setError(STR.form.nameRequired);
       return;
     }
-    onSubmit({ name, categoryId, emoji, color });
+    setSubmitting(true);
+    try {
+      await onSubmit({ name, categoryId, emoji, color });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -121,20 +130,23 @@ export default function ActivityForm({
             onPress={onCancel}
             variant="danger"
             icon={X}
+            disabled={submitting}
             className="flex-1"
           />
           <PrimaryButton
-            label={STR.form.saveEdit}
-            onPress={handleSubmit}
+            label={submitLabel}
+            onPress={() => void handleSubmit()}
             icon={Check}
+            loading={submitting}
             className="flex-1"
           />
         </View>
       ) : (
         <PrimaryButton
           label={submitLabel}
-          onPress={handleSubmit}
+          onPress={() => void handleSubmit()}
           icon={Check}
+          loading={submitting}
           className="mt-8"
         />
       )}

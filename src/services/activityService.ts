@@ -37,14 +37,17 @@ export async function updateActivity(activity: Activity, input: ActivityInput): 
   });
 }
 
-/** ลบกิจกรรมถาวร พร้อมประวัติการจับเวลาทั้งหมดของมัน (ตาม use case "ยืนยันการลบ") */
+/**
+ * ลบกิจกรรม พร้อมประวัติการจับเวลาทั้งหมดของมัน (ตาม use case "ยืนยันการลบ")
+ *
+ * ใช้ markAsDeleted (ไม่ใช่ destroyPermanently ตรง ๆ) เพราะแอปนี้ sync กับคลาวด์ —
+ * destroyPermanently ลบทิ้งในเครื่องทันทีโดยไม่บอก sync engine จึงไม่ถูกส่งขึ้น
+ * คลาวด์ แล้วรอบ sync ถัดไปจะดึงกิจกรรมเดิมกลับมาใหม่ (ลบไม่ออก/ลบแล้วคืนชีพ)
+ * markAsDeleted ทำเครื่องหมายไว้ก่อน sync จะเป็นคนลบถาวรให้เองหลังส่งขึ้นคลาวด์สำเร็จ
+ */
 export async function deleteActivity(activity: Activity): Promise<void> {
   await database.write(async () => {
-    const sessions = await activity.sessions.fetch();
-    await database.batch(
-      ...sessions.map((s) => s.prepareDestroyPermanently()),
-      activity.prepareDestroyPermanently(),
-    );
+    await activity.experimentalMarkAsDeleted();
   });
 }
 

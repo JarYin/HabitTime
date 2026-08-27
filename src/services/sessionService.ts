@@ -32,9 +32,13 @@ export async function saveSession(input: SaveSessionInput): Promise<TimeSession>
   );
 }
 
+/**
+ * ลบประวัติหนึ่งรายการ — ต้อง markAsDeleted (ไม่ใช่ destroyPermanently) เพราะแอป
+ * sync กับคลาวด์: destroyPermanently ไม่ถูกส่งขึ้นคลาวด์ รอบ sync ถัดไปจะดึงกลับมา
+ */
 export async function deleteSession(session: TimeSession): Promise<void> {
   await database.write(async () => {
-    await session.destroyPermanently();
+    await session.markAsDeleted();
   });
 }
 

@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { Pencil, Play } from 'lucide-react-native';
 import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -28,9 +28,13 @@ export default function ActivityDetailScreen() {
     [allSessions],
   );
 
+  const isFocused = useIsFocused();
+
+  // เช็ค isFocused ก่อน — ตอนลบจากหน้า edit หน้านี้ยัง mount อยู่ข้างใต้
+  // ถ้าสั่ง back() ซ้อนกับ dismissAll() ของหน้า edit จะ pop เกินหนึ่งหน้า
   useEffect(() => {
-    if (activity === null) router.back();
-  }, [activity]);
+    if (activity === null && isFocused) router.back();
+  }, [activity, isFocused]);
 
   if (!activity) return <Screen />;
 

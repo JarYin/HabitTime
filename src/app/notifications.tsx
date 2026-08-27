@@ -1,6 +1,6 @@
 import { Bell, Minus, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
 import Screen from '@/components/ui/Screen';
 import SubHeader from '@/components/ui/SubHeader';
@@ -20,6 +20,9 @@ export default function NotificationsScreen() {
   const [hour, setHour] = useState(20);
   const [minute, setMinute] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  // โชว์เป็นข้อความในหน้าแทน Alert.alert — บนเว็บ Alert เป็น no-op ผู้ใช้จะงงว่า
+  // ทำไมสวิตช์เด้งกลับเองโดยไม่บอกอะไร
+  const [permissionError, setPermissionError] = useState(false);
 
   useEffect(() => {
     void getReminderSettings().then((s) => {
@@ -35,12 +38,13 @@ export default function NotificationsScreen() {
     if (next.enabled) {
       const granted = await ensureNotificationPermission();
       if (!granted) {
-        Alert.alert(STR.settings.permissionDenied);
+        setPermissionError(true);
         setEnabled(false);
         await setReminderSettings({ ...next, enabled: false });
         await cancelDailyReminder();
         return;
       }
+      setPermissionError(false);
       await scheduleDailyReminder(next.hour, next.minute);
     } else {
       await cancelDailyReminder();
@@ -88,6 +92,10 @@ export default function NotificationsScreen() {
               thumbColor={enabled ? c.primary : c.muted}
             />
           </View>
+
+          {permissionError && (
+            <Text className="mt-3 text-xs text-danger">{STR.settings.permissionDenied}</Text>
+          )}
 
           {enabled && (
             <View className="mt-4 flex-row items-center justify-between border-t border-stroke pt-4">

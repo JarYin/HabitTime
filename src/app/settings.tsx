@@ -1,7 +1,9 @@
 import Constants from 'expo-constants';
 import { CloudCheck, CloudAlert, GitCommitHorizontal, Lock, RefreshCw } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Screen from '@/components/ui/Screen';
 import Segmented from '@/components/ui/Segmented';
 import SubHeader from '@/components/ui/SubHeader';
@@ -34,28 +36,19 @@ export default function SettingsScreen() {
   const activitiesCount = useQueryCount(() => activitiesCollection.query(), []);
   const sessionsCount = useQueryCount(() => sessionsCollection.query(), []);
 
-  const confirmWipe = () => {
-    Alert.alert(STR.settings.wipeTitle, STR.settings.wipeMessage, [
-      { text: STR.detail.cancel, style: 'cancel' },
-      {
-        text: STR.settings.wipeConfirm,
-        style: 'destructive',
-        onPress: () => void wipeAll(),
-      },
-    ]);
-  };
+  // ใช้ ConfirmDialog ของแอปเอง ไม่ใช้ Alert.alert — บนเว็บ react-native-web
+  // ทำ Alert เป็น no-op เงียบ ๆ ทำให้ปุ่มลบข้อมูลกดแล้วไม่เกิดอะไรขึ้นเลย
+  const [confirmWipe, setConfirmWipe] = useState(false);
+  const [wipeError, setWipeError] = useState<string | null>(null);
 
   const wipeAll = async () => {
     await cancelDailyReminder();
     try {
       // ลบทั้งบนเครื่องและบนคลาวด์ — ถ้าลบแค่ในเครื่อง การซิงก์รอบหน้าจะดึงกลับมา
       await wipeAllData();
+      setWipeError(null);
     } catch (error) {
-      Alert.alert(
-        STR.settings.wipeFailed,
-        error instanceof Error ? error.message : String(error),
-      );
-      return;
+      setWipeError(error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -107,12 +100,30 @@ export default function SettingsScreen() {
 
         {/* ลบข้อมูลทั้งหมด */}
         <Pressable
-          onPress={confirmWipe}
+          onPress={() => setConfirmWipe(true)}
           className="mt-4 items-center rounded-2xl border border-danger/40 bg-surface py-4 active:bg-surface2"
         >
           <Text className="text-base font-semibold text-danger">{STR.settings.wipe}</Text>
         </Pressable>
+        {wipeError && (
+          <Text className="mt-2 text-center text-xs text-danger">
+            {STR.settings.wipeFailed} — {wipeError}
+          </Text>
+        )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmWipe}
+        message={STR.settings.wipeMessage}
+        confirmLabel={STR.settings.wipeConfirm}
+        cancelLabel={STR.detail.cancel}
+        destructive
+        onCancel={() => setConfirmWipe(false)}
+        onConfirm={() => {
+          setConfirmWipe(false);
+          void wipeAll();
+        }}
+      />
     </Screen>
   );
 }

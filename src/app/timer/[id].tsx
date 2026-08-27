@@ -2,7 +2,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Check, Pause, Play, Square, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, ToastAndroid, View } from 'react-native';
+import { Platform, Pressable, Text, ToastAndroid, View } from 'react-native';
 
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import IconTile from '@/components/ui/IconTile';
@@ -14,6 +14,14 @@ import { activitiesCollection } from '@/database';
 import { useRecord } from '@/hooks/useQuery';
 import { MIN_SESSION_SEC, saveSession } from '@/services/sessionService';
 import { getElapsedSec, useTimerStore } from '@/stores/timerStore';
+
+/**
+ * Toast แจ้งผลสั้น ๆ — ToastAndroid มีเฉพาะ Android; บนเว็บ react-native-web
+ * ไม่ export ตัวนี้เลย (undefined) เรียก .show() ตรง ๆ จะ throw จนปุ่มบันทึกใช้ไม่ได้
+ */
+function showToast(message: string): void {
+  if (Platform.OS === 'android') ToastAndroid.show(message, ToastAndroid.SHORT);
+}
 
 /** จับเวลาให้อยู่ในรูป MM : SS (หรือ HH : MM : SS เมื่อเกิน 1 ชม.) ตามดีไซน์ */
 function clockText(totalSec: number): string {
@@ -35,6 +43,8 @@ export default function TimerScreen() {
   const timer = useTimerStore();
   const [elapsed, setElapsed] = useState(0);
   const [confirmStop, setConfirmStop] = useState(false);
+  // กันกดปุ่มบันทึกรัว ๆ — ไม่งั้นได้เซสชันซ้ำสองแถว + router.back() ซ้อนสองรอบ
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (timer.activityId !== id || timer.status === 'idle') {
@@ -50,17 +60,28 @@ export default function TimerScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // กิจกรรมถูกลบระหว่างจับเวลา (เช่น ลบจากอีกเครื่องแล้ว sync ดึงการลบมา)
+  // ถ้าไม่พากลับ หน้าจะค้างเป็นจอเปล่าไม่มีปุ่มย้อนกลับ
+  useEffect(() => {
+    if (activity === null) {
+      useTimerStore.getState().reset();
+      router.back();
+    }
+  }, [activity]);
+
   if (!activity) return <Screen />;
 
   const isRunning = timer.status === 'running';
 
   const stopAndSave = async () => {
+    if (saving) return;
+    setSaving(true);
     const state = useTimerStore.getState();
     const durationSec = getElapsedSec(state);
     const startedAt = state.sessionStartedAt ? new Date(state.sessionStartedAt) : new Date();
 
     if (durationSec < MIN_SESSION_SEC) {
-      ToastAndroid.show(STR.timer.tooShort, ToastAndroid.SHORT);
+      showToast(STR.timer.tooShort);
       timer.reset();
       router.back();
       return;
@@ -68,7 +89,7 @@ export default function TimerScreen() {
 
     await saveSession({ activityId: id, startedAt, endedAt: new Date(), durationSec });
     timer.reset();
-    ToastAndroid.show(STR.timer.saved, ToastAndroid.SHORT);
+    showToast(STR.timer.saved);
     router.back();
   };
 

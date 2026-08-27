@@ -33,12 +33,11 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      # EXPO_PUBLIC_FIREBASE_* variables are NOT read from GitHub Secrets here —
-      # the actual native build runs on EAS's cloud infra, not this runner.
-      # Configure them once as EAS environment variables instead:
+      # EXPO_PUBLIC_FIREBASE_* ไม่ได้ส่งจากที่นี่ — การบิลด์ native รันบนเครื่องของ EAS
+      # ไม่ใช่ runner ตัวนี้ ค่าจึงต้องอยู่ใน EAS environment "preview" (แหล่งเดียวกับที่
+      # จ๊อบ web ดึงไปใช้ผ่าน eas env:exec ด้านล่าง — มีที่เดียวจะได้ไม่หลุดจากกัน)
+      #   npx eas env:list --environment preview
       #   npx eas env:create --scope project --environment preview
-      # or via https://expo.dev -> your project -> Environment variables
-      # (eas.json's preview profile must set "environment": "preview" for them to apply)
       - name: Build Android APK (preview profile)
         id: build
         run: |
@@ -49,6 +48,8 @@ jobs:
           echo "apk_url=$apk_url" >> "$GITHUB_OUTPUT"
           {
             echo "## 📱 Android preview build"
+            echo ""
+            echo "\`Commit: ${GITHUB_SHA}\`"
             echo ""
             if [ -n "$apk_url" ]; then
               # QR ถูก render โดย api.qrserver.com (บริการภายนอก) — สแกนแล้วโหลด APK ลงมือถือได้เลย
@@ -63,6 +64,7 @@ jobs:
             echo ""
             echo "- หน้า build บน expo.dev: https://expo.dev/accounts/devaflow/projects/myapp/builds/$build_id"
             echo "- ไฟล์ APK แนบไว้ที่ Artifacts ของ run นี้ด้วย"
+            echo "- เช็กว่าตรงกับเว็บไหม: เปิดแอป → โปรไฟล์ → ตั้งค่าทั่วไป → \"เวอร์ชันของแอป\""
           } >> "$GITHUB_STEP_SUMMARY"
 
       # EAS เก็บไฟล์ไว้บนเซิร์ฟเวอร์ของ Expo — ดึงมาแนบกับ run เพื่อกดดาวน์โหลดได้จาก GitHub
@@ -96,27 +98,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # GitHub Pages เสิร์ฟที่ /<repo> ไม่ใช่ root — ต้องตั้ง baseUrl ไม่งั้น asset 404 ทั้งหน้า
-      # แก้เฉพาะตอน CI จะได้ไม่กระทบ expo start ตอน dev
-      - name: Set experiments.baseUrl for GitHub Pages
-        run: |
-          set -euo pipefail
-          jq --arg base "/${GITHUB_REPOSITORY#*/}" \
-            '.expo.experiments.baseUrl = $base' app.json > app.json.ci
-          mv app.json.ci app.json
+      # ต้องมี eas CLI เพื่อดึงค่า env จาก EAS ตอน export (ดูสเต็ปถัดไป)
+      - name: Setup EAS
+        uses: expo/expo-github-action@v9
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       # ต่างจากจ๊อบ APK: การ export เว็บรันบน runner ตัวนี้เอง ไม่ได้ไปรันบน EAS
-      # ค่า EXPO_PUBLIC_* จึงต้องมาจาก GitHub Secrets (ไฟล์ .env ถูก gitignore ไว้)
-      # ถ้าไม่ใส่ ตัวแอปจะ build ผ่านแต่หน้าล็อกอินจะขึ้นว่า "ยังไม่ได้ตั้งค่า Firebase"
+      # แต่ค่า EXPO_PUBLIC_* ต้องเป็นชุดเดียวกับที่ APK ใช้ — eas env:exec จึงดึงค่าจาก
+      # EAS environment "preview" มาใส่ให้ตอนรัน (ส่งได้เฉพาะตัวที่ไม่ใช่ secret
+      # ค่า Firebase web config ไม่ใช่ความลับอยู่แล้ว ดู .env.example)
+      #
+      # EXPO_BASE_URL: GitHub Pages เสิร์ฟที่ /<repo> ไม่ใช่ root — app.config.js
+      # อ่านค่านี้ไปตั้ง experiments.baseUrl ให้ ไม่งั้น asset 404 ทั้งหน้า
       - name: Export static web build
         env:
-          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
-          EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
-          EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-          EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
-          EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
-        run: npx expo export -p web --output-dir dist
+          EXPO_BASE_URL: /${{ github.event.repository.name }}
+        run: eas env:exec --environment preview 'npx expo export -p web --output-dir dist'
 
       # GitHub Pages เสิร์ฟไฟล์ตรง ๆ ไม่มี SPA fallback — ถ้าผู้ใช้กด refresh ค้างอยู่
       # ที่ route ย่อยที่ไม่มีไฟล์ .html ตรงกัน จะเจอหน้า 404 ของ GitHub แทนตัวแอป
@@ -151,7 +150,11 @@ jobs:
           {
             echo "## 🌐 Web preview"
             echo ""
+            echo "\`Commit: ${GITHUB_SHA}\`"
+            echo ""
             echo "เปิดดูแอปในเบราว์เซอร์ได้เลย: ${{ steps.deployment.outputs.page_url }}"
             echo ""
             echo "> โมดูล native (WatermelonDB / SecureStore / Notifications) อาจไม่ทำงานบนเว็บ — ใช้ดู UI/flow เป็นหลัก"
+            echo ""
+            echo "APK ของ run นี้สร้างจาก commit เดียวกัน — เทียบได้ที่ ตั้งค่าทั่วไป → \"เวอร์ชันของแอป\" ทั้งสองฝั่ง"
           } >> "$GITHUB_STEP_SUMMARY"

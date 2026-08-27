@@ -1,4 +1,5 @@
-import { CloudCheck, CloudAlert, Lock, RefreshCw } from 'lucide-react-native';
+import Constants from 'expo-constants';
+import { CloudCheck, CloudAlert, GitCommitHorizontal, Lock, RefreshCw } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import Screen from '@/components/ui/Screen';
@@ -101,6 +102,9 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* เวอร์ชันของ build นี้ — ใช้เทียบ APK กับเว็บพรีวิว */}
+        <BuildInfoCard />
+
         {/* ลบข้อมูลทั้งหมด */}
         <Pressable
           onPress={confirmWipe}
@@ -110,6 +114,36 @@ export default function SettingsScreen() {
         </Pressable>
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * การ์ดบอกว่า build นี้มาจาก commit ไหน
+ *
+ * ที่ต้องมี: preview build ทุกตัวใช้ version 1.0.0 เท่ากันหมด ถ้าไม่โชว์ commit
+ * ก็แยกไม่ออกว่า APK ที่ลงไว้เป็นคนละชุดกับเว็บพรีวิวหรือเปล่า
+ * ค่า commitSha ถูกฝังตอน build ผ่าน app.config.js (ดูคำอธิบายในไฟล์นั้น)
+ */
+function BuildInfoCard() {
+  const c = useColors();
+  const version = Constants.expoConfig?.version ?? '—';
+  const commitSha = (Constants.expoConfig?.extra?.commitSha as string | undefined) ?? 'dev';
+  const isDev = commitSha === 'dev';
+
+  return (
+    <View className="mt-4 rounded-2xl border border-stroke bg-surface p-4">
+      <View className="flex-row items-center">
+        <GitCommitHorizontal size={16} color={c.primary} />
+        <Text className="ml-2 text-base font-semibold text-ink">{STR.settings.versionTitle}</Text>
+      </View>
+      <Text className="mt-2 text-sm text-ink">
+        {STR.appName} {version}
+        {!isDev && <Text className="text-muted"> · {commitSha.slice(0, 7)}</Text>}
+      </Text>
+      <Text className="mt-1 text-xs text-subtle">
+        {isDev ? STR.settings.versionDev : STR.settings.versionHint}
+      </Text>
+    </View>
   );
 }
 

@@ -36,8 +36,8 @@ jobs:
       # EXPO_PUBLIC_FIREBASE_* ไม่ได้ส่งจากที่นี่ — การบิลด์ native รันบนเครื่องของ EAS
       # ไม่ใช่ runner ตัวนี้ ค่าจึงต้องอยู่ใน EAS environment "preview" (แหล่งเดียวกับที่
       # จ๊อบ web ดึงไปใช้ผ่าน eas env:exec ด้านล่าง — มีที่เดียวจะได้ไม่หลุดจากกัน)
-      #   npx eas env:list --environment preview
-      #   npx eas env:create --scope project --environment preview
+      #   npx eas env:list preview
+      #   npx eas env:set preview --scope project
       - name: Build Android APK (preview profile)
         id: build
         run: |
@@ -112,10 +112,12 @@ jobs:
       #
       # EXPO_BASE_URL: GitHub Pages เสิร์ฟที่ /<repo> ไม่ใช่ root — app.config.js
       # อ่านค่านี้ไปตั้ง experiments.baseUrl ให้ ไม่งั้น asset 404 ทั้งหน้า
+      #
+      # eas-cli 23+ รับชื่อ environment เป็น positional argument (ไม่มี --environment แล้ว)
       - name: Export static web build
         env:
           EXPO_BASE_URL: /${{ github.event.repository.name }}
-        run: eas env:exec --environment preview 'npx expo export -p web --output-dir dist'
+        run: eas env:exec preview 'npx expo export -p web --output-dir dist' --non-interactive
 
       # GitHub Pages เสิร์ฟไฟล์ตรง ๆ ไม่มี SPA fallback — ถ้าผู้ใช้กด refresh ค้างอยู่
       # ที่ route ย่อยที่ไม่มีไฟล์ .html ตรงกัน จะเจอหน้า 404 ของ GitHub แทนตัวแอป

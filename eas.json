@@ -7,7 +7,7 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "autoIncrement": "versionCode",
+      "autoIncrement": true,
       "android": {
         "buildType": "apk"
       }

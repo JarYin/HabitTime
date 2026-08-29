@@ -41,8 +41,26 @@ if (!isFirebaseConfigured) {
   );
 }
 
+/**
+ * ถ้า config ไม่ครบ ให้ init SDK ด้วยค่า placeholder แทนที่จะส่ง undefined —
+ * getAuth() จะ throw "auth/invalid-api-key" ทันทีตั้งแต่ตอน import ถ้า apiKey ว่าง
+ * ซึ่งทำให้ `expo export` (static render) และแอปทั้งตัวพังตั้งแต่ยังไม่ทันแสดงผล
+ * การเรียก Firebase จริงทุกจุดเช็ค isFirebaseConfigured / requireConfigured() อยู่แล้ว
+ * placeholder จึงไม่มีทางถูกใช้ยิงไปที่เซิร์ฟเวอร์
+ */
+const PLACEHOLDER_CONFIG = {
+  apiKey: 'missing-api-key',
+  authDomain: 'missing.firebaseapp.com',
+  projectId: 'missing-project',
+  storageBucket: 'missing.appspot.com',
+  messagingSenderId: '0',
+  appId: '1:0:web:missing',
+};
+
 // กัน initialize ซ้ำตอน Fast Refresh
-export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const firebaseApp = getApps().length
+  ? getApp()
+  : initializeApp(isFirebaseConfigured ? firebaseConfig : PLACEHOLDER_CONFIG);
 
 /**
  * Firestore ที่บังคับ long-polling — ต้องเรียก initializeFirestore ก่อน getFirestore

@@ -23,7 +23,7 @@ export const STR = {
   },
 
   login: {
-    welcomeBack: 'ยินดีต้อนรับกลับ',
+    welcome: 'ยินดีต้อนรับ',
     tabLogin: 'เข้าสู่ระบบ',
     tabRegister: 'สมัครสมาชิก',
     email: 'อีเมล',

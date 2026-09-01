@@ -83,7 +83,7 @@ export default function LoginScreen() {
         <ChevronLeft size={24} color={c.ink} />
       </Pressable>
 
-      <Text className="mt-3 text-2xl font-extrabold text-ink">{STR.login.welcomeBack}</Text>
+      <Text className="mt-3 text-2xl font-extrabold text-ink">{STR.login.welcome}</Text>
 
       {/* สลับเข้าสู่ระบบ / สมัครสมาชิก */}
       <View className="mt-6 flex-row rounded-2xl bg-surface p-1">

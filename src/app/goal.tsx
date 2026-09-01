@@ -8,6 +8,7 @@ import SubHeader from '@/components/ui/SubHeader';
 import { useColors } from '@/hooks/useColors';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
+import { useToday } from '@/hooks/useToday';
 import { addDays, formatDuration, formatThaiDate, toDayKey } from '@/lib/dates';
 import { historyQuery } from '@/services/sessionService';
 import { aggregateDailyTotals } from '@/services/statsService';
@@ -24,14 +25,14 @@ export default function GoalScreen() {
   const goalMinutes = useGoalStore((s) => s.minutes);
   const setGoalMinutes = useGoalStore((s) => s.setMinutes);
 
-  const now = new Date();
+  const now = useToday();
   const todayKey = toDayKey(now);
   const weekAgoKey = toDayKey(addDays(now, -6));
   const weekSessions = useQueryList(() => historyQuery({ fromDayKey: weekAgoKey }), [weekAgoKey]);
 
   const days = useMemo(
     () => aggregateDailyTotals(weekSessions, 7, now),
-    [weekSessions, weekAgoKey],
+    [weekSessions, now],
   );
 
   const goalSec = goalMinutes * 60;

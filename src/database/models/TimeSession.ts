@@ -21,6 +21,8 @@ export default class TimeSession extends Model {
   @date('ended_at') endedAt: Date;
   @field('duration_sec') durationSec: number;
   @text('day_key') dayKey: string;
+  /** นาทีชดเชยจาก UTC ของเครื่องที่บันทึก — null สำหรับแถวที่บันทึกก่อน schema v2 */
+  @field('tz_offset_min') tzOffsetMin: number | null;
   @text('note_enc') noteEnc: string | null;
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;

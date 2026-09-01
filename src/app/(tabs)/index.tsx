@@ -8,8 +8,10 @@ import EmptyState from '@/components/EmptyState';
 import NotificationsModal from '@/components/NotificationsModal';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
+import { useToday } from '@/hooks/useToday';
 import { addDays, formatDuration, greetingKey, toDayKey } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
 import { displayNameOf } from '@/services/authService';
@@ -26,7 +28,9 @@ const DASHBOARD_ACTIVITY_LIMIT = 5;
 /** Dashboard (หน้าแรก) — ดีไซน์ตาม Figma "home page" */
 export default function DashboardScreen() {
   const c = useColors();
-  const now = new Date();
+  const shadows = useShadows();
+  // เปลี่ยนค่าเองเมื่อข้ามวันหรือกลับเข้าแอป — เดิมค้างเป็นวันเก่าถ้าเปิดแอปทิ้งไว้ข้ามคืน
+  const now = useToday();
   const todayKey = toDayKey(now);
   const weekAgoKey = toDayKey(addDays(now, -6));
 
@@ -49,7 +53,7 @@ export default function DashboardScreen() {
     [todaySessions],
   );
   const todayByActivity = useMemo(() => totalsByActivity(todaySessions), [todaySessions]);
-  const streak = useMemo(() => currentStreak(allSessions, now), [allSessions, todayKey]);
+  const streak = useMemo(() => currentStreak(allSessions, now), [allSessions, now]);
 
   const categoryNameById = useMemo(
     () => new Map(categories.map((c) => [c.id, c.name])),
@@ -62,7 +66,7 @@ export default function DashboardScreen() {
 
   const feed = useMemo(
     () => buildNotificationFeed({ weekSessions, streak, goalMinutes, reminder, now }),
-    [weekSessions, streak, goalMinutes, reminder, todayKey],
+    [weekSessions, streak, goalMinutes, reminder, now],
   );
 
   const openNotifications = async () => {
@@ -92,14 +96,14 @@ export default function DashboardScreen() {
             onPress={() => void openNotifications()}
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
-            style={cardShadow}
+            style={shadows.card}
           >
             <Bell size={20} color={c.ink} />
           </Pressable>
         </View>
 
         {/* การ์ดน้ำเงิน: เวลารวมวันนี้ + progress ต่อเป้าหมาย */}
-        <View className="mx-5 mt-4 rounded-2xl bg-primary p-5" style={primaryShadow}>
+        <View className="mx-5 mt-4 rounded-2xl bg-primary p-5" style={shadows.primary(c.primary)}>
           <Text className="text-xs font-bold text-white/90">{STR.dashboard.todayTotal}</Text>
           <Text className="mt-1 text-3xl font-extrabold text-white">
             {formatDuration(todayTotalSec)}
@@ -116,7 +120,7 @@ export default function DashboardScreen() {
         <View className="mx-5 mt-3 flex-row gap-3">
           <StatCard
             icon={Flame}
-            iconColor="#F26B3A"
+            iconColor={c.streak}
             value={STR.dashboard.streakValue(streak)}
             label={STR.dashboard.streak}
           />
@@ -160,7 +164,7 @@ export default function DashboardScreen() {
       <Pressable
         onPress={() => router.push('/activity/new')}
         className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary active:opacity-85"
-        style={primaryShadow}
+        style={shadows.primary(c.primary)}
       >
         <Plus size={30} color="#FFFFFF" />
       </Pressable>
@@ -185,8 +189,9 @@ function StatCard({
   value: string;
   label: string;
 }) {
+  const shadows = useShadows();
   return (
-    <View className="flex-1 rounded-2xl bg-surface p-3.5" style={cardShadow}>
+    <View className="flex-1 rounded-2xl bg-surface p-3.5" style={shadows.card}>
       <Icon size={18} color={iconColor} />
       <Text className="mt-2 text-lg font-extrabold text-ink">{value}</Text>
       <Text className="text-[11px] text-muted">{label}</Text>
@@ -194,18 +199,4 @@ function StatCard({
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;
 
-const primaryShadow = {
-  shadowColor: '#0F2EF5',
-  shadowOpacity: 0.3,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
-} as const;

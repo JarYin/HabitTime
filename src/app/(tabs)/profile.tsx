@@ -16,6 +16,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
 import { formatDuration } from '@/lib/dates';
@@ -27,6 +28,8 @@ import { useAuthStore } from '@/stores/authStore';
 
 /** หน้าโปรไฟล์ (ดีไซน์ Figma "profile page") — ข้อมูลผู้ใช้ + สถิติรวม + เมนูตั้งค่า */
 export default function ProfileScreen() {
+  const c = useColors();
+  const shadows = useShadows();
   const activities = useQueryList(() => activeActivitiesQuery(), []);
   const allSessions = useQueryList(() => historyQuery(), []);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -48,7 +51,7 @@ export default function ProfileScreen() {
         <View className="mt-4 items-center px-5">
           <View
             className="h-20 w-20 items-center justify-center rounded-full bg-primary"
-            style={primaryShadow}
+            style={shadows.primary(c.primary)}
           >
             <Text className="text-3xl font-extrabold text-white">
               {displayName.trim().charAt(0).toUpperCase()}
@@ -60,17 +63,17 @@ export default function ProfileScreen() {
           {/* ป้าย streak */}
           <View
             className="mt-3 flex-row items-center rounded-full px-3 py-1.5"
-            style={{ backgroundColor: 'rgba(242,107,58,0.14)' }}
+            style={{ backgroundColor: `${c.streak}24` }}
           >
-            <Flame size={13} color="#F26B3A" />
-            <Text className="ml-1.5 text-xs font-bold" style={{ color: '#D9531F' }}>
+            <Flame size={13} color={c.streak} />
+            <Text className="ml-1.5 text-xs font-bold" style={{ color: c.streakInk }}>
               {STR.profile.streak} {streak} {STR.profile.days}
             </Text>
           </View>
         </View>
 
         {/* สถิติรวม 3 ช่อง */}
-        <View className="mx-5 mt-5 flex-row rounded-2xl bg-surface py-4" style={cardShadow}>
+        <View className="mx-5 mt-5 flex-row rounded-2xl bg-surface py-4" style={shadows.card}>
           <StatCol value={formatDuration(totalSec)} label={STR.profile.totalTime} />
           <Divider />
           <StatCol value={String(allSessions.length)} label={STR.profile.times} />
@@ -79,7 +82,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* เมนู กลุ่มบัญชี */}
-        <View className="mx-5 mt-5 overflow-hidden rounded-2xl bg-surface" style={cardShadow}>
+        <View className="mx-5 mt-5 overflow-hidden rounded-2xl bg-surface" style={shadows.card}>
           <MenuRow icon={Pencil} label={STR.profile.editProfile} onPress={() => router.push('/account')} />
           <RowDivider />
           <MenuRow icon={Flag} label={STR.profile.dailyGoal} onPress={() => router.push('/goal')} />
@@ -88,7 +91,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* เมนู กลุ่มระบบ */}
-        <View className="mx-5 mt-4 overflow-hidden rounded-2xl bg-surface" style={cardShadow}>
+        <View className="mx-5 mt-4 overflow-hidden rounded-2xl bg-surface" style={shadows.card}>
           <MenuRow icon={Settings} label={STR.profile.settings} onPress={() => router.push('/settings')} />
           <RowDivider />
           <MenuRow
@@ -150,7 +153,12 @@ function MenuRow({
   const c = useColors();
   const color = danger ? c.danger : c.ink;
   return (
-    <Pressable onPress={onPress} className="flex-row items-center px-4 py-3.5 active:bg-surface2">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="flex-row items-center px-4 py-3.5 active:bg-surface2"
+    >
       <View className="h-8 w-8 items-center justify-center">
         <Icon size={20} color={danger ? c.danger : c.primary} />
       </View>
@@ -162,18 +170,4 @@ function MenuRow({
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;
 
-const primaryShadow = {
-  shadowColor: '#0F2EF5',
-  shadowOpacity: 0.3,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
-} as const;

@@ -1,7 +1,7 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Check, Pause, Play, Square, type LucideIcon } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, Text, ToastAndroid, View } from 'react-native';
 
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -9,6 +9,7 @@ import IconTile from '@/components/ui/IconTile';
 import Screen from '@/components/ui/Screen';
 import SubHeader from '@/components/ui/SubHeader';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { activitiesCollection } from '@/database';
 import { useRecord } from '@/hooks/useQuery';
@@ -37,6 +38,7 @@ function clockText(totalSec: number): string {
 export default function TimerScreen() {
   useKeepAwake();
   const c = useColors();
+  const shadows = useShadows();
 
   const { id } = useLocalSearchParams<{ id: string }>();
   const activity = useRecord(activitiesCollection, id);
@@ -44,7 +46,14 @@ export default function TimerScreen() {
   const [elapsed, setElapsed] = useState(0);
   const [confirmStop, setConfirmStop] = useState(false);
   // กันกดปุ่มบันทึกรัว ๆ — ไม่งั้นได้เซสชันซ้ำสองแถว + router.back() ซ้อนสองรอบ
+  //
+  // ต้องเป็น ref ไม่ใช่ state: state อัปเดตในเรนเดอร์ถัดไปเท่านั้น การกดสองครั้งที่
+  // ตกอยู่ใน batch เดียวกันจะเห็น saving === false ทั้งคู่แล้วเขียนเซสชันซ้ำสองแถว
+  const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // ยังอยู่บนหน้าจอนี้ไหม — กัน router.back() ยิงซ้ำหลัง unmount
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     if (timer.activityId !== id || timer.status === 'idle') {
@@ -52,6 +61,23 @@ export default function TimerScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  /**
+   * ออกจากหน้านี้เมื่อไหร่ให้พักนาฬิกาไว้เสมอ
+   *
+   * timer อยู่ใน store ระดับ global ที่ไม่ผูกกับ lifecycle ของหน้าจอ เดิมกดปุ่ม Back
+   * ออกไปแล้วมันยังนับต่อไปเรื่อย ๆ เพราะ getElapsedSec คิดจากเวลาจริง กลับเข้ามาอีกที
+   * ตอนบ่ายจะเจอตัวเลข 4 ชั่วโมงที่ไม่เคยเกิดขึ้น กดบันทึกครั้งเดียวได้เซสชันผีทันที
+   *
+   * พักไว้แทนที่จะ reset ทิ้ง — เวลาที่จับมาแล้วยังอยู่ครบ ผู้ใช้กลับมากด "จับต่อ" ได้
+   */
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      useTimerStore.getState().pause();
+    };
+  }, []);
 
   useEffect(() => {
     const tick = () => setElapsed(getElapsedSec(useTimerStore.getState()));
@@ -74,23 +100,36 @@ export default function TimerScreen() {
   const isRunning = timer.status === 'running';
 
   const stopAndSave = async () => {
-    if (saving) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
-    const state = useTimerStore.getState();
-    const durationSec = getElapsedSec(state);
-    const startedAt = state.sessionStartedAt ? new Date(state.sessionStartedAt) : new Date();
 
-    if (durationSec < MIN_SESSION_SEC) {
-      showToast(STR.timer.tooShort);
+    try {
+      const state = useTimerStore.getState();
+      const durationSec = getElapsedSec(state);
+      const startedAt = state.sessionStartedAt ? new Date(state.sessionStartedAt) : new Date();
+
+      if (durationSec < MIN_SESSION_SEC) {
+        showToast(STR.timer.tooShort);
+        timer.reset();
+        if (mountedRef.current) router.back();
+        return;
+      }
+
+      await saveSession({ activityId: id, startedAt, endedAt: new Date(), durationSec });
       timer.reset();
-      router.back();
-      return;
+      showToast(STR.timer.saved);
+      // ผู้ใช้อาจกด Back ไปแล้วระหว่างที่เขียนฐานข้อมูล — เรียกซ้ำจะเด้งย้อนสองหน้า
+      if (mountedRef.current) router.back();
+    } catch (error) {
+      // เดิมไม่มี catch/finally เลย ถ้าเขียนฐานข้อมูลพลาด saving จะค้างเป็น true ตลอดไป
+      // ปุ่มบันทึกตายสนิท ทางออกเดียวคือกด Stop ซึ่งทิ้งเซสชันที่จับมาทั้งหมด
+      console.error('[HabitTime] save session failed', error);
+      setSaveError(error instanceof Error ? error.message : String(error));
+    } finally {
+      savingRef.current = false;
+      if (mountedRef.current) setSaving(false);
     }
-
-    await saveSession({ activityId: id, startedAt, endedAt: new Date(), durationSec });
-    timer.reset();
-    showToast(STR.timer.saved);
-    router.back();
   };
 
   return (
@@ -99,7 +138,7 @@ export default function TimerScreen() {
 
       <View className="flex-1 items-center px-8">
         {/* ชิปกิจกรรม */}
-        <View className="mt-2 flex-row items-center rounded-full bg-surface py-1.5 pl-1.5 pr-5" style={cardShadow}>
+        <View className="mt-2 flex-row items-center rounded-full bg-surface py-1.5 pl-1.5 pr-5" style={shadows.card}>
           <IconTile icon={activity.emoji} color={activity.color} size={30} className="rounded-full" />
           <Text className="ml-2 text-base font-bold text-ink" numberOfLines={1}>
             {activity.name}
@@ -156,8 +195,15 @@ export default function TimerScreen() {
             icon={Check}
             size={56}
             variant="light"
+            disabled={saving}
           />
         </View>
+
+        {saveError && (
+          <Text className="mt-6 text-center text-xs text-danger">
+            {STR.timer.saveFailed} — {saveError}
+          </Text>
+        )}
       </View>
 
       <ConfirmDialog
@@ -183,25 +229,33 @@ function ControlButton({
   icon: Icon,
   size,
   variant,
+  disabled = false,
 }: {
   label: string;
   onPress: () => void;
   icon: LucideIcon;
   size: number;
   variant: 'primary' | 'light';
+  disabled?: boolean;
 }) {
   const c = useColors();
+  const shadows = useShadows();
   const isPrimary = variant === 'primary';
   return (
     <View className="items-center">
       <Pressable
         onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         className="items-center justify-center rounded-full active:opacity-80"
         style={{
           width: size,
           height: size,
           backgroundColor: isPrimary ? c.primary : c.surface,
-          ...cardShadow,
+          opacity: disabled ? 0.5 : 1,
+          ...shadows.card,
         }}
       >
         <Icon size={isPrimary ? 30 : 22} color={isPrimary ? '#FFFFFF' : c.ink} />
@@ -210,11 +264,3 @@ function ControlButton({
     </View>
   );
 }
-
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.08,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 4 },
-  elevation: 2,
-} as const;

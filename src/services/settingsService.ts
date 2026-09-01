@@ -16,6 +16,39 @@ const KEYS = {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
+/**
+ * ค่าที่เป็นของ "เครื่อง" ไม่ใช่ของ "บัญชี" — ธีม, เป้าหมายรายวัน, เวลาแจ้งเตือน
+ *
+ * unsafeResetDatabase() ล้าง localStorage ทั้งก้อนไปด้วย ตอนสลับบัญชีจึงพลอย
+ * ลบค่าพวกนี้ทิ้งทั้งที่ไม่เกี่ยวกับการแยกข้อมูลระหว่างบัญชีเลย ผู้ใช้ที่ตั้งธีมมืด
+ * กับเป้าหมาย 6 ชม. ไว้ต้องมาตั้งใหม่ทุกครั้งที่สลับบัญชี — snapshot ไว้ก่อนแล้วคืนหลัง reset
+ */
+export type DeviceSettingsSnapshot = Record<string, unknown>;
+
+const DEVICE_SETTING_KEYS = [
+  KEYS.themeMode,
+  KEYS.dailyGoalMinutes,
+  KEYS.reminderEnabled,
+  KEYS.reminderHour,
+  KEYS.reminderMinute,
+  KEYS.onboardingDone,
+] as const;
+
+export async function snapshotDeviceSettings(): Promise<DeviceSettingsSnapshot> {
+  const entries = await Promise.all(
+    DEVICE_SETTING_KEYS.map(async (key) => [key, await database.localStorage.get(key)] as const),
+  );
+  return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
+}
+
+export async function restoreDeviceSettings(snapshot: DeviceSettingsSnapshot): Promise<void> {
+  await Promise.all(
+    Object.entries(snapshot).map(([key, value]) =>
+      database.localStorage.set(key, value as string | number | boolean),
+    ),
+  );
+}
+
 export async function getThemeMode(): Promise<ThemeMode> {
   const value = await database.localStorage.get<string>(KEYS.themeMode);
   return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';

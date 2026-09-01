@@ -50,8 +50,17 @@ export default function ActivityForm({
       return;
     }
     setSubmitting(true);
+    setError('');
     try {
-      await onSubmit({ name, categoryId, emoji, color });
+      // ส่งชื่อที่ตัดช่องว่างแล้ว — เดิมส่งดิบ ๆ แล้วไปหวังให้ activityService trim ให้
+      // สัญญาของ ActivityInput จึงไม่ตรงกับที่เรียกใช้จริง
+      await onSubmit({ name: name.trim(), categoryId, emoji, color });
+    } catch (e) {
+      // เดิมมีแต่ finally ไม่มี catch — ถ้าเขียนฐานข้อมูลพลาด (เช่นเข้ารหัสไม่ได้)
+      // spinner จะกะพริบแล้วหาย ฟอร์มนิ่งอยู่กับที่ ผู้ใช้กดซ้ำไปเรื่อย ๆ
+      // โดยไม่รู้ว่ากิจกรรมไม่เคยถูกสร้าง error โผล่แค่ใน console
+      console.error('[HabitTime] save activity failed', e);
+      setError(`${STR.form.saveFailed} — ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setSubmitting(false);
     }

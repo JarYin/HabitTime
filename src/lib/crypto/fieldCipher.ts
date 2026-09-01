@@ -44,18 +44,35 @@ export function encryptText(plain: string): string {
   return `${VERSION_PREFIX}:${bytesToHex(nonce)}:${bytesToHex(ciphertext)}`;
 }
 
-export function decryptText(payload: string | null | undefined): string {
+/**
+ * ถอดรหัสแบบเข้มงวด — ถอดไม่ได้ให้โยน ห้ามกลืน
+ *
+ * ใช้ในเส้นทางที่ผลลัพธ์จะถูก "เขียนทับของจริง" โดยเฉพาะการดันขึ้นคลาวด์
+ * (ดู syncBackend.toCloud) ถ้าคืนค่าว่างตรงนั้น การซิงก์จะเขียนค่าว่างทับชื่อจริง
+ * บน Firestore ด้วย merge:false แล้วกระจายลงทุกเครื่องในรอบ pull ถัดไป
+ * — ข้อมูลผู้ใช้หายถาวรทั้งเครื่องและคลาวด์ กู้ไม่ได้
+ *
+ * ปล่อยให้โยนแล้วให้การซิงก์ล้มทั้งรอบ ปลอดภัยกว่าซิงก์สำเร็จแบบข้อมูลหาย
+ */
+export function decryptTextStrict(payload: string | null | undefined): string {
   if (!payload) return '';
   const parts = payload.split(':');
   if (parts.length !== 3 || parts[0] !== VERSION_PREFIX) {
     // ไม่ใช่รูปแบบที่เข้ารหัส — คืนค่าดิบ (กันข้อมูลจากเวอร์ชันเก่า)
     return payload;
   }
+  const plain = gcm(requireKey(), hexToBytes(parts[1])).decrypt(hexToBytes(parts[2]));
+  return bytesToUtf8(plain);
+}
+
+/**
+ * ถอดรหัสสำหรับ "แสดงผลบนหน้าจอ" เท่านั้น — ถอดไม่ได้คืนค่าว่างเพื่อไม่ให้แอปพัง
+ * ห้ามใช้กับค่าที่จะถูกเขียนกลับลงฐานข้อมูลหรือดันขึ้นคลาวด์ ให้ใช้ decryptTextStrict แทน
+ */
+export function decryptText(payload: string | null | undefined): string {
   try {
-    const plain = gcm(requireKey(), hexToBytes(parts[1])).decrypt(hexToBytes(parts[2]));
-    return bytesToUtf8(plain);
+    return decryptTextStrict(payload);
   } catch (e) {
-    // ถอดรหัสไม่ได้ (กุญแจผิด/ข้อมูลเสีย) — อย่าทำแอปพัง แสดงเป็นค่าว่างแทน
     console.error('decryptText failed', e);
     return '';
   }

@@ -24,6 +24,10 @@ export interface ThemeColors {
   success: string;
   danger: string;
   warn: string;
+  /** สีเปลวไฟของป้าย streak — แยกจาก warn เพราะเป็นส้มอิฐ ไม่ใช่เหลือง */
+  streak: string;
+  /** สีตัวอักษรบนพื้นป้าย streak (เข้มกว่า streak เพื่อให้อ่านออกบนพื้นจาง) */
+  streakInk: string;
 }
 
 export const LIGHT_COLORS: ThemeColors = {
@@ -42,6 +46,8 @@ export const LIGHT_COLORS: ThemeColors = {
   success: '#4E853F',
   danger: '#E5484D',
   warn: '#DEA020',
+  streak: '#F26B3A',
+  streakInk: '#D9531F',
 };
 
 export const DARK_COLORS: ThemeColors = {
@@ -60,6 +66,10 @@ export const DARK_COLORS: ThemeColors = {
   success: '#6BCB77',
   danger: '#FF6B6B',
   warn: '#F2C14E',
+  // สว่างขึ้นกว่าโหมดสว่างมาก เพราะต้องอ่านออกบนพื้น #121216
+  // (ค่าเดิม #D9531F ให้ contrast แค่ราว 3.3:1 บนพื้นมืด)
+  streak: '#FF8A5C',
+  streakInk: '#FFA47D',
 };
 
 /** ค่าเริ่มต้น (โหมดสว่าง) — คงไว้เพื่อความเข้ากันได้ ควรใช้ useColors() ในคอมโพเนนต์ */

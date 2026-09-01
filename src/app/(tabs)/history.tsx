@@ -8,8 +8,10 @@ import ScreenHeader from '@/components/ui/ScreenHeader';
 import Screen from '@/components/ui/Screen';
 import SessionRow from '@/components/SessionRow';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
+import { useToday } from '@/hooks/useToday';
 import { addDays, formatDuration, formatThaiDate, toDayKey } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
 import { categoriesQuery } from '@/services/categoryService';
@@ -22,9 +24,11 @@ import type { TimeSession } from '@/database/models';
  */
 export default function HistoryScreen() {
   const c = useColors();
+  const shadows = useShadows();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const now = useToday();
 
   const sessions = useQueryList(() => historyQuery({ categoryId }), [categoryId]);
   const activities = useQueryList(() => activeActivitiesQuery(), []);
@@ -49,8 +53,8 @@ export default function HistoryScreen() {
       list.push(s);
       byDay.set(s.dayKey, list);
     }
-    const todayKey = toDayKey(new Date());
-    const yesterdayKey = toDayKey(addDays(new Date(), -1));
+    const todayKey = toDayKey(now);
+    const yesterdayKey = toDayKey(addDays(now, -1));
     return [...byDay.entries()].map(([dayKey, list]) => {
       const prefix =
         dayKey === todayKey
@@ -64,7 +68,7 @@ export default function HistoryScreen() {
         data: list,
       };
     });
-  }, [visibleSessions]);
+  }, [visibleSessions, now]);
 
   return (
     <Screen noBottomInset>
@@ -76,7 +80,7 @@ export default function HistoryScreen() {
             onPress={() => setSearchOpen((v) => !v)}
             hitSlop={8}
             className="h-10 w-10 items-center justify-center rounded-full bg-surface active:opacity-80"
-            style={cardShadow}
+            style={shadows.card}
           >
             <Search size={18} color={c.ink} />
           </Pressable>
@@ -84,7 +88,7 @@ export default function HistoryScreen() {
       />
 
       {searchOpen && (
-        <View className="mx-5 mt-3 flex-row items-center rounded-2xl bg-surface px-3" style={cardShadow}>
+        <View className="mx-5 mt-3 flex-row items-center rounded-2xl bg-surface px-3" style={shadows.card}>
           <Search size={18} color={c.muted} />
           <TextInput
             value={search}
@@ -104,7 +108,10 @@ export default function HistoryScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(s) => s.id}
-        contentContainerClassName="px-5 pb-10 pt-2"
+        // ต้องเป็น style ไม่ใช่ contentContainerClassName — react-native-css-interop
+        // ลงทะเบียนแค่ ScrollView/FlatList/VirtualizedList/KeyboardAvoidingView
+        // ไม่มี SectionList คลาส Tailwind ตรงนี้จึงถูกละเลยเงียบ ๆ แถวชิดขอบจอ
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 8 }}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={<EmptyState icon={Calendar} message={STR.history.empty} />}
@@ -129,10 +136,3 @@ export default function HistoryScreen() {
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;

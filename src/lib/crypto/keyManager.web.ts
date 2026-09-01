@@ -22,15 +22,45 @@ const KEY_STORAGE_NAME = 'habittime_db_field_key_v1';
 export async function initEncryption(): Promise<void> {
   if (isEncryptionReady()) return;
 
-  // ตอน prerender (expo export -p web) โค้ดรันใน Node ที่ไม่มี localStorage —
-  // optional chaining ทำให้ได้กุญแจชั่วคราวในหน่วยความจำแทนที่จะพัง
-  const storage = globalThis.localStorage as Storage | undefined;
-  let keyHex = storage?.getItem(KEY_STORAGE_NAME) ?? null;
-
-  if (!keyHex) {
+  // ตอน prerender (expo export -p web) โค้ดรันใน Node ที่ไม่มี window เลย —
+  // กุญแจชั่วคราวในหน่วยความจำใช้ได้ เพราะไม่มีฐานข้อมูลจริงให้ถอดรหัสอยู่แล้ว
+  const inBrowser = typeof window !== 'undefined';
+  if (!inBrowser) {
     const keyBytes = await Crypto.getRandomBytesAsync(32);
-    keyHex = bytesToHex(new Uint8Array(keyBytes));
-    storage?.setItem(KEY_STORAGE_NAME, keyHex);
+    setEncryptionKey(new Uint8Array(keyBytes));
+    return;
+  }
+
+  /**
+   * ในเบราว์เซอร์จริงต้องเก็บกุญแจให้ได้จริงเท่านั้น
+   *
+   * เดิมใช้ `storage?.setItem()` ซึ่งถ้า localStorage ถูกบล็อก (โหมดส่วนตัว,
+   * ตั้งค่าปิด site data) จะเงียบ ๆ ไม่บันทึกแล้วสุ่มกุญแจใหม่ทุกครั้งที่เปิดแอป
+   * ขณะที่ฐานข้อมูลอยู่ใน IndexedDB ที่ยังอยู่ครบ → เปิดครั้งที่สองถอดรหัสไม่ออก
+   * ทั้งหมด → ซิงก์รอบเดียวชื่อกิจกรรมหายเกลี้ยงทุกเครื่อง
+   *
+   * ยอมให้ init ล้มดังกว่าปล่อยให้ข้อมูลผู้ใช้พังเงียบ ๆ
+   */
+  let keyHex: string | null;
+  try {
+    keyHex = window.localStorage.getItem(KEY_STORAGE_NAME);
+
+    if (!keyHex) {
+      const keyBytes = await Crypto.getRandomBytesAsync(32);
+      keyHex = bytesToHex(new Uint8Array(keyBytes));
+      window.localStorage.setItem(KEY_STORAGE_NAME, keyHex);
+
+      // อ่านกลับเพื่อยืนยันว่าเขียนติดจริง — บางเบราว์เซอร์ไม่โยนแต่ก็ไม่บันทึก
+      if (window.localStorage.getItem(KEY_STORAGE_NAME) !== keyHex) {
+        throw new Error('localStorage did not persist the key');
+      }
+    }
+  } catch (error) {
+    throw new Error(
+      'ไม่สามารถเก็บกุญแจเข้ารหัสในเบราว์เซอร์นี้ได้ (localStorage ถูกปิดใช้งาน) — ' +
+        'กรุณาอนุญาต site data แล้วเปิดใหม่ มิฉะนั้นข้อมูลที่บันทึกไว้จะอ่านไม่ออก',
+      { cause: error },
+    );
   }
 
   setEncryptionKey(hexToBytes(keyHex));

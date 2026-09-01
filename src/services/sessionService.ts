@@ -6,7 +6,7 @@ import { Q } from '@nozbe/watermelondb';
 
 import { database, sessionsCollection } from '@/database';
 import type { TimeSession } from '@/database/models';
-import { toDayKey } from '@/lib/dates';
+import { currentTzOffsetMin, toDayKey } from '@/lib/dates';
 
 export interface SaveSessionInput {
   activityId: string;
@@ -26,7 +26,20 @@ export async function saveSession(input: SaveSessionInput): Promise<TimeSession>
       session.startedAt = input.startedAt;
       session.endedAt = input.endedAt;
       session.durationSec = Math.floor(input.durationSec);
-      session.dayKey = toDayKey(input.endedAt);
+      /**
+       * ยึด "วันที่เริ่มจับเวลา" ไม่ใช่วันที่จบ
+       *
+       * เดิมใช้ endedAt ทำให้เซสชัน จันทร์ 23:40 → อังคาร 00:20 ถูกนับเป็นวันอังคาร
+       * ทั้ง 40 นาที ผลคือกราฟวันจันทร์ขึ้น 0 ประวัติไม่มีวันจันทร์ และ currentStreak
+       * มองไม่เห็นวันจันทร์ — streak ที่ผู้ใช้ต่อไว้จริงเมื่อคืนกลับถูกนับว่าขาด
+       * ซ้ำยังทำให้ยอด "วันนี้" ของวันอังคารขึ้น 40 นาทีตั้งแต่ตี 00:20 ทั้งที่ยังไม่ได้ทำอะไร
+       *
+       * ผู้ใช้เข้าใจว่า "กิจกรรมนี้ทำเมื่อคืนวันจันทร์" การยึดวันที่เริ่มจึงตรงกับความรู้สึกกว่า
+       */
+      session.dayKey = toDayKey(input.startedAt);
+      // เก็บโซนเวลาของเครื่องที่บันทึกไว้คู่กัน เพื่อให้เวลาที่แสดงตรงกับ dayKey
+      // เสมอแม้เปิดดูจากเครื่องคนละโซนเวลา (ดู formatThaiTimeAt)
+      session.tzOffsetMin = currentTzOffsetMin();
       session.setNote(input.note ?? '');
     }),
   );

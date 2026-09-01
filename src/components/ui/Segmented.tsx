@@ -33,6 +33,9 @@ export default function Segmented<T extends string>({ options, value, onChange }
           <Pressable
             key={opt.value}
             onPress={() => onChange(opt.value)}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: active, checked: active }}
             className="flex-1 items-center rounded-xl py-2.5"
             style={{ backgroundColor: active ? c.primarySoft : 'transparent' }}
           >

@@ -3,9 +3,11 @@ import '../global.css';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { Text, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
 import { useColors } from '@/hooks/useColors';
+import { STR } from '@/constants/strings';
 import { seedDefaultCategoriesIfNeeded } from '@/database/seed';
 import { initEncryption } from '@/lib/crypto/keyManager';
 import { isFirebaseConfigured } from '@/lib/firebase/config';
@@ -22,6 +24,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const ready = useAppStore((s) => s.ready);
   const setReady = useAppStore((s) => s.setReady);
+  const setInitError = useAppStore((s) => s.setInitError);
+  const initError = useAppStore((s) => s.initError);
   const authReady = useAuthStore((s) => s.ready);
   const setUser = useAuthStore((s) => s.setUser);
   // ใช้ uid (ไม่ใช่ตัว object) เป็น dependency — onAuthStateChanged ยิงซ้ำตอนต่ออายุ
@@ -54,7 +58,13 @@ export default function RootLayout() {
         await hydrateSyncState();
         await hydrateGoal();
       } catch (error) {
+        // ปล่อยให้แอปเปิดต่อได้ (จะได้ไม่ค้างที่จอ splash) แต่ต้องบอกผู้ใช้ให้รู้
+        // ไม่งั้นถ้ากุญแจโหลดไม่ขึ้น เขาจะเห็นชื่อกิจกรรมว่างเปล่าโดยไม่รู้สาเหตุ
+        // ส่วนการซิงก์ถูกกันไว้แล้วที่ runSync (เช็ค isEncryptionReady) จึงไม่ทำข้อมูลพัง
         console.error('[HabitTime] app init failed', error);
+        if (!cancelled) {
+          setInitError(error instanceof Error ? error.message : String(error));
+        }
       } finally {
         if (!cancelled) setReady();
       }
@@ -62,7 +72,7 @@ export default function RootLayout() {
     return () => {
       cancelled = true;
     };
-  }, [setReady, hydrateTheme, hydrateGoal]);
+  }, [setReady, setInitError, hydrateTheme, hydrateGoal]);
 
   // ติดตามสถานะล็อกอินตลอดอายุแอป — Firebase คืนค่าจาก session ที่เก็บไว้ให้เอง
   useEffect(() => {
@@ -94,6 +104,19 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+
+      {/* init พลาด = อาจอ่านชื่อกิจกรรมไม่ออกและซิงก์ถูกระงับ ต้องบอกให้เห็นชัด */}
+      {initError && (
+        <View style={{ backgroundColor: colors.danger, paddingHorizontal: 16, paddingVertical: 10 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>
+            {STR.common.initFailed}
+          </Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 11, marginTop: 2 }} numberOfLines={3}>
+            {initError}
+          </Text>
+        </View>
+      )}
+
       <Stack
         screenOptions={{
           headerShown: false,

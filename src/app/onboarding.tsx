@@ -55,8 +55,7 @@ export default function LandingScreen() {
                 }}
               >
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-full"
-                  style={{ backgroundColor: 'rgba(15,46,245,0.12)' }}
+                  className="h-11 w-11 items-center justify-center rounded-full bg-primary/12"
                 >
                   <Icon size={22} color={c.primary} />
                 </View>
@@ -71,11 +70,11 @@ export default function LandingScreen() {
       <View className="pb-6">
         <PrimaryButton
           label={STR.landing.start}
-          onPress={() => router.push({ pathname: '/login', params: { mode: 'register' } } as never)}
+          onPress={() => router.push({ pathname: '/login', params: { mode: 'register' } })}
         />
         <PrimaryButton
           label={STR.landing.haveAccount}
-          onPress={() => router.push('/login' as never)}
+          onPress={() => router.push('/login')}
           variant="outline"
           className="mt-3"
         />

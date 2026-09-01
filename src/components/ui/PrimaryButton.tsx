@@ -40,6 +40,9 @@ export default function PrimaryButton({
     <Pressable
       onPress={onPress}
       disabled={blocked}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: blocked, busy: loading }}
       style={blocked ? { opacity: 0.6 } : undefined}
       className={`flex-row items-center justify-center rounded-2xl py-4 active:opacity-85 ${bg} ${border} ${className ?? ''}`}
     >

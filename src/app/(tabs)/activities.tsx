@@ -9,6 +9,7 @@ import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Screen from '@/components/ui/Screen';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
 import { activeActivitiesQuery, filterActivitiesByName } from '@/services/activityService';
@@ -19,6 +20,7 @@ import { totalsByActivity } from '@/services/statsService';
 /** หน้าจัดการกิจกรรมทั้งหมด — เข้าจาก "ดูทั้งหมด" บนหน้าแรก */
 export default function ActivitiesScreen() {
   const c = useColors();
+  const shadows = useShadows();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
@@ -52,7 +54,7 @@ export default function ActivitiesScreen() {
         <ScreenHeader title={STR.activities.title} className="flex-1 px-1" />
       </View>
 
-      <View className="mt-4 flex-row items-center rounded-2xl bg-surface mx-5 px-3" style={cardShadow}>
+      <View className="mt-4 flex-row items-center rounded-2xl bg-surface mx-5 px-3" style={shadows.card}>
         <Search size={18} color={c.muted} />
         <TextInput
           value={search}
@@ -87,7 +89,7 @@ export default function ActivitiesScreen() {
       <Pressable
         onPress={() => router.push('/activity/new')}
         className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary active:opacity-85"
-        style={primaryShadow}
+        style={shadows.primary(c.primary)}
       >
         <Plus size={30} color="#FFFFFF" />
       </Pressable>
@@ -95,18 +97,4 @@ export default function ActivitiesScreen() {
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;
 
-const primaryShadow = {
-  shadowColor: '#0F2EF5',
-  shadowOpacity: 0.3,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
-} as const;

@@ -2,6 +2,7 @@ import { Play } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import IconTile from '@/components/ui/IconTile';
+import { STR } from '@/constants/strings';
 import type { Activity } from '@/database/models';
 import { formatDuration } from '@/lib/dates';
 
@@ -30,6 +31,8 @@ export default function ActivityCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={activity.name}
       className="mb-2.5 flex-row items-center rounded-2xl bg-surface px-3 py-2.5 active:opacity-90"
       style={{
         shadowColor: '#000',
@@ -55,6 +58,8 @@ export default function ActivityCard({
       <Pressable
         onPress={onStartTimer}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`${STR.timer.start} ${activity.name}`}
         className="ml-2 h-9 w-9 items-center justify-center rounded-full bg-primary active:opacity-80"
       >
         <Play size={16} color="#FFFFFF" fill="#FFFFFF" />

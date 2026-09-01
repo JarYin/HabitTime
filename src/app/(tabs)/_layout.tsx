@@ -49,7 +49,14 @@ function TabBar({ state, descriptors, navigation }: any) {
         };
 
         return (
-          <Pressable key={route.key} onPress={onPress} className="flex-1 items-center pt-2 pb-1">
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            accessibilityRole="tab"
+            accessibilityLabel={label}
+            accessibilityState={{ selected: focused }}
+            className="flex-1 items-center pt-2 pb-1"
+          >
             <View
               className="items-center justify-center rounded-lg px-4 py-1"
               style={{ backgroundColor: focused ? c.primarySoft : 'transparent' }}

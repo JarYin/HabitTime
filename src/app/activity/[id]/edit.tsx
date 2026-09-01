@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 
 import ActivityForm from '@/components/ActivityForm';
@@ -22,7 +22,21 @@ export default function EditActivityScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const c = useColors();
 
-  if (!activity || categories.length === 0) return <Screen />;
+  // กิจกรรมไม่มีอยู่จริง/ถูกลบไปแล้ว (เช่นซิงก์ดึงการลบจากอีกเครื่องมา) — พากลับเอง
+  // เดิมคืนจอเปล่าที่ไม่มี SubHeader จึงไม่มีปุ่มย้อนกลับ ผู้ใช้ติดค้างถาวร
+  // (หน้ารายละเอียดจัดการเคสนี้ถูกอยู่แล้ว แต่หน้าแก้ไขไม่เคยได้โค้ดชุดเดียวกัน)
+  useEffect(() => {
+    if (activity === null) router.back();
+  }, [activity]);
+
+  // ยังโหลดอยู่ (undefined) หรือกำลังจะถูกพากลับ — แสดงจอว่างพร้อมหัวข้อไว้ก่อน
+  if (!activity || categories.length === 0) {
+    return (
+      <Screen>
+        <SubHeader title={STR.form.editTitle} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

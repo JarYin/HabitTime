@@ -78,6 +78,30 @@ export function formatThaiTime(date: Date): string {
   return thaiTimeFmt.format(date);
 }
 
+/** นาทีชดเชยจาก UTC ของเครื่องนี้ตอนนี้ (ไทย = +420) — บันทึกคู่กับทุกเซสชัน */
+export function currentTzOffsetMin(): number {
+  return -new Date().getTimezoneOffset();
+}
+
+/**
+ * แสดงเวลาตามโซนเวลาของ "เครื่องที่บันทึก" ไม่ใช่เครื่องที่กำลังดู
+ *
+ * ที่ต้องมี: day_key ถูกคิดจากเวลาท้องถิ่นตอนบันทึกและถูกซิงก์ไปตรง ๆ แต่
+ * started_at/ended_at เป็น epoch ms ถ้าจัดรูปด้วยโซนของเครื่องที่กำลังดู
+ * เซสชันที่บันทึกในกรุงเทพฯ 07:30 จะไปโผล่เป็น 00:30 บนเครื่องที่ตั้งเป็น UTC
+ * ทั้งที่ยังอยู่ใต้หัวข้อวันเดิม — เวลากับวันจะขัดกันเอง
+ *
+ * offsetMin เป็น null สำหรับแถวเก่าก่อน schema v2 → ถอยไปใช้โซนของเครื่องที่ดู
+ * (พฤติกรรมเดิม) ซึ่งถูกต้องอยู่แล้วตราบใดที่ผู้ใช้ไม่ได้ย้ายโซนเวลา
+ */
+export function formatThaiTimeAt(date: Date, offsetMin: number | null | undefined): string {
+  if (offsetMin === null || offsetMin === undefined) return thaiTimeFmt.format(date);
+
+  // เลื่อนเวลาไปเท่ากับส่วนต่างของสองโซน แล้วจัดรูปด้วย formatter เดิม
+  const shifted = new Date(date.getTime() + (offsetMin - -date.getTimezoneOffset()) * 60_000);
+  return thaiTimeFmt.format(shifted);
+}
+
 /** แปลงวินาทีเป็นข้อความอ่านง่าย เช่น "1 ชม. 23 นาที", "45 นาที", "30 วิ" */
 export function formatDuration(totalSec: number): string {
   const sec = Math.max(0, Math.floor(totalSec));

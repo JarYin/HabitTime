@@ -8,8 +8,10 @@ import Screen from '@/components/ui/Screen';
 import Segmented from '@/components/ui/Segmented';
 import WeekBars from '@/components/WeekBars';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { useQueryList } from '@/hooks/useQuery';
+import { useToday } from '@/hooks/useToday';
 import { addDays, formatDuration, toDayKey } from '@/lib/dates';
 import { activeActivitiesQuery } from '@/services/activityService';
 import { historyQuery } from '@/services/sessionService';
@@ -30,8 +32,9 @@ const TOTAL_LABEL: Record<StatsPeriod, string> = {
 /** หน้าสถิติ (ดีไซน์ Figma "statistic page") — การ์ดรวมเวลา + กราฟ 7 วัน + รายการใช้เวลามากที่สุด */
 export default function StatsScreen() {
   const c = useColors();
+  const shadows = useShadows();
   const [period, setPeriod] = useState<StatsPeriod>('weekly');
-  const now = new Date();
+  const now = useToday();
 
   const fromDayKey = toDayKey(periodStartDate(period, now));
   const sessions = useQueryList(() => historyQuery({ fromDayKey }), [fromDayKey]);
@@ -40,7 +43,7 @@ export default function StatsScreen() {
   const weekSessions = useQueryList(() => historyQuery({ fromDayKey: weekAgoKey }), [weekAgoKey]);
 
   const stats = useMemo(() => aggregatePeriodStats(sessions, activities), [sessions, activities]);
-  const weekData = useMemo(() => aggregateDailyTotals(weekSessions, 7, now), [weekSessions, fromDayKey]);
+  const weekData = useMemo(() => aggregateDailyTotals(weekSessions, 7, now), [weekSessions, now]);
   const maxSec = stats.byActivity[0]?.totalSec ?? 1;
 
   return (
@@ -52,7 +55,7 @@ export default function StatsScreen() {
           right={
             <View
               className="h-10 w-10 items-center justify-center rounded-full bg-surface"
-              style={cardShadow}
+              style={shadows.card}
             >
               <Calendar size={18} color={c.ink} />
             </View>
@@ -64,7 +67,7 @@ export default function StatsScreen() {
         </View>
 
         {/* การ์ดรวมเวลา + กราฟ */}
-        <View className="mx-5 mt-4 rounded-2xl bg-surface p-5" style={cardShadow}>
+        <View className="mx-5 mt-4 rounded-2xl bg-surface p-5" style={shadows.card}>
           <Text className="text-xs font-semibold text-muted">{TOTAL_LABEL[period]}</Text>
           <Text className="mt-1 text-2xl font-extrabold text-ink">{formatDuration(stats.totalSec)}</Text>
           <View className="mt-5">
@@ -108,10 +111,3 @@ export default function StatsScreen() {
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;

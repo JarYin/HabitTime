@@ -42,8 +42,11 @@ export default function SettingsScreen() {
   const [wipeError, setWipeError] = useState<string | null>(null);
 
   const wipeAll = async () => {
-    await cancelDailyReminder();
+    // ทุกอย่างต้องอยู่ใน try — เดิม cancelDailyReminder() อยู่ข้างนอก พอมันโยน
+    // (บนเว็บ expo-notifications ไม่มีตัวตั้งเวลา) การลบข้อมูลก็ไม่เคยถูกเรียก
+    // และ setWipeError ก็ไม่ถูกเรียก ผู้ใช้กดยืนยันแล้วไม่มีอะไรเกิดขึ้นเลย
     try {
+      await cancelDailyReminder();
       // ลบทั้งบนเครื่องและบนคลาวด์ — ถ้าลบแค่ในเครื่อง การซิงก์รอบหน้าจะดึงกลับมา
       await wipeAllData();
       setWipeError(null);

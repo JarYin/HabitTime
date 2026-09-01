@@ -6,6 +6,7 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
 import SubHeader from '@/components/ui/SubHeader';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { isFirebaseConfigured } from '@/lib/firebase/config';
 import {
@@ -22,6 +23,7 @@ import { useAuthStore } from '@/stores/authStore';
  */
 export default function AccountScreen() {
   const c = useColors();
+  const shadows = useShadows();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -72,7 +74,7 @@ export default function AccountScreen() {
         <View className="items-center py-2">
           <View
             className="h-20 w-20 items-center justify-center rounded-full bg-primary"
-            style={primaryShadow}
+            style={shadows.primary(c.primary)}
           >
             <Text className="text-3xl font-extrabold text-white">
               {displayNameOf(user).trim().charAt(0).toUpperCase()}
@@ -136,10 +138,3 @@ export default function AccountScreen() {
   );
 }
 
-const primaryShadow = {
-  shadowColor: '#0F2EF5',
-  shadowOpacity: 0.3,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
-} as const;

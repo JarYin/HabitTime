@@ -9,6 +9,7 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import Screen from '@/components/ui/Screen';
 import SubHeader from '@/components/ui/SubHeader';
 import { useColors } from '@/hooks/useColors';
+import { useShadows } from '@/hooks/useShadows';
 import { STR } from '@/constants/strings';
 import { activitiesCollection } from '@/database';
 import { useQueryList, useRecord } from '@/hooks/useQuery';
@@ -18,6 +19,7 @@ import { activitySessionsQuery, allActivitySessionsQuery } from '@/services/sess
 /** หน้ารายละเอียดกิจกรรม — เวลาสะสม, จำนวนครั้ง, เริ่มจับเวลา, ประวัติล่าสุด */
 export default function ActivityDetailScreen() {
   const c = useColors();
+  const shadows = useShadows();
   const { id } = useLocalSearchParams<{ id: string }>();
   const activity = useRecord(activitiesCollection, id);
   const recentSessions = useQueryList(() => activitySessionsQuery(id, 20), [id]);
@@ -60,11 +62,11 @@ export default function ActivityDetailScreen() {
         </View>
 
         <View className="mx-5 mt-5 flex-row gap-3">
-          <View className="flex-1 rounded-2xl bg-surface p-4" style={cardShadow}>
+          <View className="flex-1 rounded-2xl bg-surface p-4" style={shadows.card}>
             <Text className="text-xs text-muted">{STR.detail.totalTime}</Text>
             <Text className="mt-1 text-xl font-extrabold text-ink">{formatDuration(totalSec)}</Text>
           </View>
-          <View className="flex-1 rounded-2xl bg-surface p-4" style={cardShadow}>
+          <View className="flex-1 rounded-2xl bg-surface p-4" style={shadows.card}>
             <Text className="text-xs text-muted">{STR.detail.sessionCount}</Text>
             <Text className="mt-1 text-xl font-extrabold text-ink">{allSessions.length}</Text>
           </View>
@@ -94,10 +96,3 @@ export default function ActivityDetailScreen() {
   );
 }
 
-const cardShadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 1,
-} as const;

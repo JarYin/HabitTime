@@ -1,8 +1,9 @@
 import { Text, View } from 'react-native';
 
 import IconTile from '@/components/ui/IconTile';
+import { useColors } from '@/hooks/useColors';
 import type { Activity, TimeSession } from '@/database/models';
-import { formatDuration, formatThaiTime } from '@/lib/dates';
+import { formatDuration, formatThaiTimeAt } from '@/lib/dates';
 
 interface SessionRowProps {
   session: TimeSession;
@@ -14,8 +15,12 @@ interface SessionRowProps {
 
 /** แถวประวัติการจับเวลา 1 ครั้ง (สไตล์ Figma) — กล่องสี + ชื่อ/หมวดหมู่ + เวลาสะสม */
 export default function SessionRow({ session, activity, subtitle }: SessionRowProps) {
+  const c = useColors();
+  // แสดงตามโซนเวลาของเครื่องที่บันทึก ไม่ใช่เครื่องที่กำลังดู — ไม่งั้นเซสชันที่บันทึก
+  // ในกรุงเทพฯ 07:30 จะโผล่เป็น 00:30 บนเครื่อง UTC ทั้งที่ยังอยู่ใต้หัวข้อวันเดิม
+  const tz = session.tzOffsetMin;
   const secondLine =
-    subtitle ?? `${formatThaiTime(session.startedAt)} - ${formatThaiTime(session.endedAt)}`;
+    subtitle ?? `${formatThaiTimeAt(session.startedAt, tz)} - ${formatThaiTimeAt(session.endedAt, tz)}`;
 
   return (
     <View
@@ -28,7 +33,9 @@ export default function SessionRow({ session, activity, subtitle }: SessionRowPr
         elevation: 1,
       }}
     >
-      <IconTile icon={activity?.emoji} color={activity?.color ?? '#A6A2AC'} size={38} />
+      {/* c.subtle ไม่ใช่ '#A6A2AC' ตายตัว — ค่านั้นคือเทาของโหมดสว่าง พอเป็นโหมดมืด
+          แถวที่กิจกรรมถูกลบไปแล้วจะเป็นเทาสว่างโดดขึ้นมาบนพื้นมืด */}
+      <IconTile icon={activity?.emoji} color={activity?.color ?? c.subtle} size={38} />
       <View className="ml-3 flex-1">
         <Text className="text-sm font-bold text-ink" numberOfLines={1}>
           {activity?.name ?? '—'}
